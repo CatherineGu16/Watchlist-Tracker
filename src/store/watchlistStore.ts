@@ -29,6 +29,11 @@ export interface WatchlistStore {
   undo(): void
   /** Import: merge keeps edits from both; replace swaps in the file as-is. */
   importData(incoming: PrivateData, mode: 'merge' | 'replace'): void
+  /**
+   * Takes in data merged with another device. Clears undo: older snapshots don't know about the
+   * incoming watches, so undoing past this point would delete them.
+   */
+  applySynced(data: PrivateData): void
   /** Resolves once everything applied so far is on disk. */
   flush(): Promise<void>
 }
@@ -113,6 +118,10 @@ export function createWatchlistStore(
     },
     importData(incoming, mode) {
       commit(mode === 'merge' ? mergeData(state.data, incoming) : incoming, mode === 'merge' ? 'Imported backup' : 'Replaced data from backup')
+    },
+    applySynced(data) {
+      undoStack.length = 0
+      commit(data, null)
     },
     flush: () => writing,
   }

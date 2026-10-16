@@ -5,25 +5,28 @@ import { TitleDetail } from './components/TitleDetail.tsx'
 import { TitleList } from './components/TitleList.tsx'
 import { ToastProvider } from './components/Toast.tsx'
 import { Toolbar } from './components/Toolbar.tsx'
-import { StoreContext } from './store/StoreContext.tsx'
-import { loadStore, useTitleViews, useWatchlistState } from './store/useWatchlist.ts'
+import { SyncChip } from './components/SyncChip.tsx'
+import { StoreContext, SyncContext } from './store/StoreContext.tsx'
+import { loadServices, useTitleViews, useWatchlistState, type AppServices } from './store/useWatchlist.ts'
 import type { WatchlistStore } from './store/watchlistStore.ts'
 import { DEFAULT_QUERY, activeFilterCount, filterViews, groupViews, phasesIn, sagasIn, sortViews, type ListQuery } from './ui/listQuery.ts'
 import { useActions } from './ui/useActions.ts'
 import { usePersistentState } from './ui/usePersistentState.ts'
 
 export default function App() {
-  const [store, setStore] = useState<WatchlistStore | null>(null)
+  const [services, setServices] = useState<AppServices | null>(null)
   useEffect(() => {
-    void loadStore().then(setStore)
+    void loadServices().then(setServices)
   }, [])
 
-  if (!store) return <p className="p-6 text-muted">Loading…</p>
+  if (!services) return <p className="p-6 text-muted">Loading…</p>
   return (
-    <StoreContext.Provider value={store}>
-      <ToastProvider>
-        <Shell store={store} />
-      </ToastProvider>
+    <StoreContext.Provider value={services.store}>
+      <SyncContext.Provider value={services.sync}>
+        <ToastProvider>
+          <Shell store={services.store} />
+        </ToastProvider>
+      </SyncContext.Provider>
     </StoreContext.Provider>
   )
 }
@@ -61,7 +64,14 @@ function Shell({ store }: { store: WatchlistStore }) {
 
   return (
     <div className="mx-auto min-h-dvh max-w-3xl pb-24">
-      <Header views={views} universe={query.universe} onUniverse={(u) => update({ universe: u })} onSettings={() => setSettingsOpen(true)} onOpen={setOpenId} />
+      <Header
+        views={views}
+        universe={query.universe}
+        onUniverse={(u) => update({ universe: u })}
+        onSettings={() => setSettingsOpen(true)}
+        onOpen={setOpenId}
+        syncChip={<SyncChip onSettings={() => setSettingsOpen(true)} />}
+      />
       {state.error && (
         <p role="alert" className="mx-3 mt-3 rounded-lg bg-danger/15 p-3 text-sm text-danger sm:mx-4">
           {state.error}
@@ -75,7 +85,7 @@ function Shell({ store }: { store: WatchlistStore }) {
       {state.data.watches.length === 0 && (
         <div className="mx-3 mt-4 rounded-xl border border-line bg-surface p-4 sm:mx-4">
           <p className="font-bold">Start checking things off, or bring in your history.</p>
-          <p className="mt-1 text-sm text-muted">Have a backup file? Import it from Settings.</p>
+          <p className="mt-1 text-sm text-muted">Already set up on another device? Connect sync or import a backup in Settings.</p>
           <button onClick={() => setSettingsOpen(true)} className="mt-3 min-h-11 rounded-lg bg-raised px-4 text-sm font-bold hover:bg-line">
             Open Settings
           </button>
