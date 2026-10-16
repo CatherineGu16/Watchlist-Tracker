@@ -42,8 +42,8 @@ watch by watch, and the newest edit to the same watch wins.
 
 - **Lost a device?** Revoke its key at GitHub → Settings → Developer settings → Personal access
   tokens, and create a new one for your other devices.
-- **Key expired?** The header shows "Sync problem". Create a new key, then in Settings disconnect
-  and connect again. Nothing on the device is lost.
+- **Key expired?** The header shows "Sync problem". Follow [docs/ACCESS_KEY.md](docs/ACCESS_KEY.md)
+  to create a new key and reconnect each device. Nothing is lost.
 - The app refuses to sync if `watchlist-data` is ever made public.
 
 ## Deploy (one time)
