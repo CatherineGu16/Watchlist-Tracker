@@ -45,7 +45,7 @@ export function Toolbar({
   const sorts = SORTS.filter((s) => !s.mcuOnly || query.universe === 'mcu')
 
   return (
-    <div className="sticky top-0 z-20 border-b border-line bg-bg/95 px-3 pt-3 pb-2 backdrop-blur sm:px-4">
+    <div className="sticky top-0 z-20 border-b border-line bg-bg/95 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 backdrop-blur sm:px-4">
       <div className="flex gap-2">
         <label className="relative min-w-0 flex-1">
           <span className="sr-only">Search titles</span>

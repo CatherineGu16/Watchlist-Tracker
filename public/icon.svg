@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#11152a"/>
+  <!-- Infinity Saga gold and Multiverse Saga violet, the two halves of the MCU -->
+  <path d="M256 96a160 160 0 0 1 0 320" fill="none" stroke="#b98aff" stroke-width="44" stroke-linecap="round"/>
+  <path d="M256 416a160 160 0 0 1 0-320" fill="none" stroke="#f2c14e" stroke-width="44" stroke-linecap="round"/>
+  <path d="M184 262l50 50 98-112" fill="none" stroke="#edeff8" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

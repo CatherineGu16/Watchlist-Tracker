@@ -61,7 +61,7 @@ function Shell({ store }: { store: WatchlistStore }) {
 
   return (
     <div className="mx-auto min-h-dvh max-w-3xl pb-24">
-      <Header views={views} universe={query.universe} onUniverse={(u) => update({ universe: u })} onSettings={() => setSettingsOpen(true)} />
+      <Header views={views} universe={query.universe} onUniverse={(u) => update({ universe: u })} onSettings={() => setSettingsOpen(true)} onOpen={setOpenId} />
       {state.error && (
         <p role="alert" className="mx-3 mt-3 rounded-lg bg-danger/15 p-3 text-sm text-danger sm:mx-4">
           {state.error}

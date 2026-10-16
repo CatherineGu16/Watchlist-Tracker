@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react'
 import type { TitleView } from '../lib/catalogView.ts'
+import { todayIso } from '../lib/partialDate.ts'
 import type { Universe } from '../lib/types.ts'
+import { formatCountdown, plural } from '../ui/format.ts'
 import { sagaColor, sagaRank } from '../ui/sagas.ts'
+import { nextRelease, watchesInYear } from '../ui/stats.ts'
 
 const UNIVERSES: { id: Universe; label: string }[] = [
   { id: 'mcu', label: 'MCU' },
@@ -17,8 +20,10 @@ export function Header({
   universe,
   onUniverse,
   onSettings,
+  onOpen,
   syncChip,
 }: {
+  onOpen: (id: string) => void
   views: TitleView[]
   universe: Universe
   onUniverse: (u: Universe) => void
@@ -28,6 +33,9 @@ export function Header({
   const mine = views.filter((v) => v.title.universe === universe)
   const watched = mine.filter((v) => v.summary.status === 'watched').length
   const sagas = [...new Set(mine.map((v) => v.title.saga))].sort((a, b) => sagaRank(a) - sagaRank(b))
+  const today = todayIso()
+  const next = nextRelease(views, universe, today)
+  const thisYear = watchesInYear(views, today.slice(0, 4))
 
   return (
     <header className="px-3 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-4">
@@ -98,6 +106,23 @@ export function Header({
           )
         })}
       </ul>
+      <div className="mt-3 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-sm">
+        {next && (
+          <button onClick={() => onOpen(next.view.title.id)} className="min-h-9 text-left hover:underline">
+            <span className="text-muted">Next up </span>
+            <span className="font-bold">
+              {next.view.title.title}
+              {next.seasonLabel && ` ${next.seasonLabel}`}
+            </span>
+            <span className="text-muted">, {lowerFirst(formatCountdown(next.date, today))}</span>
+          </button>
+        )}
+        <span className="text-muted">
+          {thisYear > 0 ? `${plural(thisYear, 'watch', 'watches')} logged in ${today.slice(0, 4)}` : `Nothing logged yet in ${today.slice(0, 4)}`}
+        </span>
+      </div>
     </header>
   )
 }
+
+const lowerFirst = (s: string) => s[0].toLowerCase() + s.slice(1)
