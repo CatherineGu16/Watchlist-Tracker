@@ -68,10 +68,10 @@ describe('sortViews and groupViews', () => {
     expect(groups.map((g) => g.label)).toEqual(['2008', '2011', '2012', '2021', '2026'])
     expect(groups[0].watched).toBe(1)
   })
-  it('story order follows the timeline and groups by phase', () => {
+  it('story order follows the timeline as one run', () => {
     const sorted = sortViews(mcu, 'story')
     expect(ids(sorted)).toEqual(['cap', 'iron-man', 'the-avengers', 'wandavision', 'doomsday'])
-    expect(groupViews(sorted, 'story').map((g) => g.label)).toEqual(['Phase 1', 'Phase 4', 'Phase 6'])
+    expect(groupViews(sorted, 'story').map((g) => g.label)).toEqual(['In story order'])
   })
   it('title order ignores leading articles', () => {
     expect(sortableTitle('The Avengers')).toBe('Avengers')

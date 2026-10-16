@@ -11,3 +11,5 @@ data/private/
 !.vscode/extensions.json
 .idea
 .playwright-mcp/
+test-results/
+playwright-report/

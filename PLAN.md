@@ -165,6 +165,8 @@ until the TMDB release check is turned on.
 
 ## Milestones
 
+All seven milestones are done. Notes on where the build differs from the original plan are below the table.
+
 | # | Milestone | Done when |
 |---|---|---|
 | M1 | Scaffold (Vite/React/TS/Tailwind), import script → `catalog.json` (public) + `data/private/watchlist.json`, added titles, phases, chrono order | Catalog builds. Parser and status tests pass. No personal data in tracked files |
@@ -175,6 +177,19 @@ until the TMDB release check is turned on.
 | M6 | GitHub sync: settings, fetch/merge/save, conflict retry, offline queue, status chip | Edit on phone → visible on PC after refresh. Two-device conflict test passes |
 | M7 | GitHub Actions deploy to Pages, Playwright E2E (desktop + phone viewports), README | Live on `https://<username>.github.io/watchlist-tracker/` |
 | Later | TMDB release check + posters (when you have a key) | — |
+
+### Changes from the plan while building
+
+- **Story order** is one continuous list. Phases jump around in story order (Captain Marvel sits
+  among Phase 1), so phase headings would repeat.
+- **Rows** show saga-colored spines instead of posters. Posters wait for TMDB.
+- **iPad and desktop** use a single centered list with the detail panel sliding in from the right,
+  rather than two columns. Year and saga groups read top to bottom, which two columns would break.
+- **Filters** expand inline under the toolbar on every screen size instead of a separate sheet on phones.
+- **Unsynced edits** are tracked with a flag rather than by comparing timestamps, so a device whose
+  clock runs fast can't hide another device's changes. Undo history is cleared after a sync brings
+  in changes from another device.
+- **Status chip** reads Synced / Saving / Syncing / Offline / Sync problem.
 
 ## Your setup steps (at M6/M7, with step-by-step help)
 

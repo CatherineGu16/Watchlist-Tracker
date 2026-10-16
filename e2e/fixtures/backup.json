@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "watches": [
+    {
+      "id": "fixture-1",
+      "titleId": "captain-america-brave-new-world-2025",
+      "seasonId": null,
+      "startDate": "2025-03-14",
+      "endDate": "2025-03-14",
+      "approximate": false,
+      "episodesWatched": null,
+      "note": "",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "fixture-2",
+      "titleId": "daredevil-born-again-2025",
+      "seasonId": "daredevil-born-again-2025-s1",
+      "startDate": null,
+      "endDate": "2025",
+      "approximate": true,
+      "episodesWatched": null,
+      "note": "",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "customTitles": [],
+  "customSeasons": [],
+  "titleOverrides": {}
+}

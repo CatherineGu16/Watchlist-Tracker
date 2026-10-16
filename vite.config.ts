@@ -4,8 +4,9 @@ import type { Plugin } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
 
-// GitHub Pages serves the app from https://<username>.github.io/watchlist-tracker/
-const BASE = '/watchlist-tracker/'
+// GitHub Pages serves the app from https://<username>.github.io/<repo>/. The deploy workflow passes
+// the repo name in BASE_PATH, so renaming the repo doesn't break the site.
+const BASE = process.env.BASE_PATH ?? '/watchlist-tracker/'
 
 /**
  * Production-only Content Security Policy: the app may load only its own files and talk only to

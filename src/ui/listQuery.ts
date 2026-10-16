@@ -94,10 +94,8 @@ export function groupViews(sorted: TitleView[], sort: SortKey): ListGroup[] {
       return { key: y, label: y }
     },
     saga: (v) => ({ key: v.title.saga, label: v.title.saga, saga: v.title.saga }),
-    story: (v) => {
-      const p = v.title.phase
-      return p === null ? { key: 'none', label: 'Outside the phases' } : { key: `p${p}`, label: `Phase ${p}` }
-    },
+    // Story order jumps between phases (Captain Marvel sits among Phase 1), so it's one run.
+    story: () => ({ key: 'story', label: 'In story order' }),
     title: (v) => {
       const c = sortableTitle(v.title.title)[0]?.toUpperCase() ?? '#'
       const letter = /[A-Z]/.test(c) ? c : '#'
@@ -114,7 +112,9 @@ export function groupViews(sorted: TitleView[], sort: SortKey): ListGroup[] {
     const g = keyOf[sort](v)
     let last = groups.at(-1)
     if (!last || last.key !== g.key) {
-      last = { ...g, items: [], watched: 0 }
+      // Keys stay unique even if a sort ever splits a group.
+      const repeat = groups.filter((x) => x.key.split('~')[0] === g.key).length
+      last = { ...g, key: repeat ? `${g.key}~${repeat}` : g.key, items: [], watched: 0 }
       groups.push(last)
     }
     last.items.push(v)
