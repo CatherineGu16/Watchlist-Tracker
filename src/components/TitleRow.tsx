@@ -3,6 +3,7 @@ import type { TitleView } from '../lib/catalogView.ts'
 import { todayIso } from '../lib/partialDate.ts'
 import { formatCountdown, formatDate, plural } from '../ui/format.ts'
 import { sagaColor } from '../ui/sagas.ts'
+import { seriesNote, shortSeason } from '../ui/seriesProgress.ts'
 import { CheckButton } from './CheckButton.tsx'
 
 const TYPE_LABEL = { movie: 'Movie', series: 'Series', special: 'Special' } as const
@@ -59,6 +60,25 @@ function StatusText({ view, today }: { view: TitleView; today: string }) {
     return <span className="text-fg">{date ? formatCountdown(date, today) : 'Date to be announced'}</span>
   }
   if (title.type === 'series') {
+    const note = seriesNote(view, today)
+    if (note?.kind === 'watching') {
+      const count = note.season.episodeCount
+      return (
+        <span className="text-fg">
+          Watching {shortSeason(note.season)}
+          {note.episodes !== null && count !== null && `, ${note.episodes}/${count}`}
+        </span>
+      )
+    }
+    if (note?.kind === 'new-season') return <span className="font-bold text-fg">New: {shortSeason(note.season)}</span>
+    if (note?.kind === 'next-season' && summary.status === 'watched' && note.season.premiereDate) {
+      const when = formatCountdown(note.season.premiereDate, today)
+      return (
+        <span className="text-fg">
+          Caught up. {shortSeason(note.season)} {when[0].toLowerCase() + when.slice(1)}
+        </span>
+      )
+    }
     if (summary.seasonsReleased === 0) return null
     if (summary.status === 'watched') return <span className="text-fg">{summary.seasonsReleased === 1 ? 'Watched' : `All ${summary.seasonsReleased} seasons`}</span>
     if (summary.status === 'unwatched') return <span>{plural(summary.seasonsReleased, 'season')}</span>

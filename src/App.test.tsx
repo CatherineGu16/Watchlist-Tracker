@@ -42,6 +42,16 @@ describe('App', () => {
     expect(within(sheet).getByText('All caught up')).toBeInTheDocument()
   })
 
+  it('marks seasons watched long ago without inventing dates', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(await screen.findByRole('button', { name: /^Loki: 0 of 2 seasons watched/ }))
+    const sheet = await screen.findByRole('dialog')
+    await user.click(within(sheet).getByRole('button', { name: 'Mark all 2 seasons watched, date unknown' }))
+    expect(within(sheet).getByText('All caught up')).toBeInTheDocument()
+    expect(within(sheet).getAllByText('Date unknown')).toHaveLength(2)
+  })
+
   it('switches to Other Marvel and searches', async () => {
     const user = userEvent.setup()
     render(<App />)
