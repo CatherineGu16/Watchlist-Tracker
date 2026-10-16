@@ -79,3 +79,10 @@ export function summarizeTitle(
 
   return { status, seasonsDone, seasonsReleased: released.length, watchCount, firstWatched, lastWatched }
 }
+
+/** Oldest first; a watch with no dates sorts first since it's usually the earliest viewing. */
+export function compareWatches(a: Watch, b: Watch): number {
+  const x = a.startDate ?? a.endDate ?? ''
+  const y = b.startDate ?? b.endDate ?? ''
+  return x < y ? -1 : x > y ? 1 : a.createdAt.localeCompare(b.createdAt)
+}

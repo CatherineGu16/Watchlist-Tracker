@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react'
 import { downloadBackup, readBackup } from '../lib/backupFile.ts'
 import type { PrivateData } from '../lib/types.ts'
+import { useStore } from '../store/StoreContext.tsx'
 import { useWatchlistState } from '../store/useWatchlist.ts'
-import type { WatchlistStore } from '../store/watchlistStore.ts'
 
-export function BackupPanel({ store }: { store: WatchlistStore }) {
+export function BackupPanel() {
+  const store = useStore()
   const { data } = useWatchlistState(store)
   const input = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState<{ name: string; data: PrivateData } | null>(null)
@@ -31,20 +32,19 @@ export function BackupPanel({ store }: { store: WatchlistStore }) {
     setPending(null)
   }
 
-  const button =
-    'min-h-11 rounded-lg px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500'
+  const button = 'min-h-11 rounded-lg px-4 text-sm font-bold transition-colors'
 
   return (
-    <section className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-      <h2 className="font-semibold">Backup</h2>
-      <p className="mt-1 text-sm text-zinc-400">
-        Save a copy of your watch history, or load one onto this device. Files stay on your device.
+    <section className="rounded-xl border border-line p-4">
+      <h2 className="font-display text-xl font-semibold">Backup</h2>
+      <p className="mt-1 text-sm text-muted">
+        Save a copy of your watch history, or load one onto this device.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
-        <button className={`${button} bg-zinc-800 hover:bg-zinc-700`} onClick={() => downloadBackup(data)}>
+        <button className={`${button} bg-raised hover:bg-line`} onClick={() => downloadBackup(data)}>
           Export
         </button>
-        <button className={`${button} bg-zinc-800 hover:bg-zinc-700`} onClick={() => input.current?.click()}>
+        <button className={`${button} bg-raised hover:bg-line`} onClick={() => input.current?.click()}>
           Import…
         </button>
         <input
@@ -57,19 +57,19 @@ export function BackupPanel({ store }: { store: WatchlistStore }) {
       </div>
 
       {pending && (
-        <div className="mt-4 rounded-lg border border-zinc-700 p-3 text-sm" role="dialog" aria-label="Confirm import">
+        <div className="mt-4 rounded-lg border border-line bg-bg/40 p-3 text-sm" role="group" aria-label="Confirm import">
           <p>
             <span className="font-medium">{pending.name}</span> has {live(pending.data)} watches. This device has{' '}
             {live(data)}.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button className={`${button} bg-red-600 text-white hover:bg-red-500`} onClick={() => confirm('merge')}>
+            <button className={`${button} bg-primary text-on-primary`} onClick={() => confirm('merge')}>
               Merge (keep both)
             </button>
-            <button className={`${button} bg-zinc-800 hover:bg-zinc-700`} onClick={() => confirm('replace')}>
+            <button className={`${button} bg-raised hover:bg-line`} onClick={() => confirm('replace')}>
               Replace this device's data
             </button>
-            <button className={`${button} text-zinc-400 hover:text-zinc-200`} onClick={() => setPending(null)}>
+            <button className={`${button} text-muted hover:text-fg`} onClick={() => setPending(null)}>
               Cancel
             </button>
           </div>
@@ -77,7 +77,7 @@ export function BackupPanel({ store }: { store: WatchlistStore }) {
       )}
 
       {message && (
-        <p className={`mt-3 text-sm ${message.tone === 'error' ? 'text-red-400' : 'text-emerald-400'}`} role="status">
+        <p className={`mt-3 text-sm ${message.tone === 'error' ? 'text-danger' : 'text-ok'}`} role="status">
           {message.text}
         </p>
       )}

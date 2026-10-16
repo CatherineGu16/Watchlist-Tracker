@@ -24,8 +24,8 @@ export interface WatchlistStore {
   getState(): WatchlistState
   subscribe(listener: () => void): () => void
   init(): Promise<void>
-  /** Applies an edit right away, then saves in the background. */
-  apply(edit: Edit, label: string): void
+  /** Applies an edit right away, then saves in the background. False if the edit was refused. */
+  apply(edit: Edit, label: string): boolean
   undo(): void
   /** Import: merge keeps edits from both; replace swaps in the file as-is. */
   importData(incoming: PrivateData, mode: 'merge' | 'replace'): void
@@ -97,11 +97,13 @@ export function createWatchlistStore(
       }
     },
     apply(edit, label) {
-      if (state.status !== 'ready') return
+      if (state.status !== 'ready') return false
       try {
         commit(edit(state.data, ctx()), label)
+        return true
       } catch (e) {
         set({ error: (e as Error).message })
+        return false
       }
     },
     undo() {

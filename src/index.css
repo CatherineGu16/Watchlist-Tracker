@@ -1,1 +1,143 @@
 @import 'tailwindcss';
+@import '@fontsource/barlow-condensed/500.css';
+@import '@fontsource/barlow-condensed/600.css';
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/600.css';
+
+/* Dark ink is the default; light follows the system unless a theme is picked in Settings. */
+:root {
+  color-scheme: dark;
+  --bg: #11152a;
+  --surface: #181e38;
+  --raised: #222a4c;
+  --line: #2e3760;
+  --fg: #edeff8;
+  --muted: #a1a9cc;
+  --primary: #f2c14e;
+  --on-primary: #1d1604;
+  --focus: #f2c14e;
+  --danger: #ff7a85;
+  --ok: #6fdcb0;
+  --toast: #2c3460;
+
+  --saga-infinity: #f2c14e;
+  --saga-multiverse: #b98aff;
+  --saga-xmen: #4f95ff;
+  --saga-spider: #ff5a6a;
+  --saga-classic: #d39a68;
+  --saga-other: #3fcab6;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    color-scheme: light;
+    --bg: #f2f3f9;
+    --surface: #ffffff;
+    --raised: #e8eaf4;
+    --line: #d3d7e8;
+    --fg: #161a2e;
+    --muted: #555d7c;
+    --primary: #f2c14e;
+    --on-primary: #1d1604;
+    --focus: #3346c4;
+    --danger: #c2273a;
+    --ok: #0f7a57;
+    --toast: #1b2142;
+
+    --saga-infinity: #c58a00;
+    --saga-multiverse: #7a40e0;
+    --saga-xmen: #1e66d6;
+    --saga-spider: #d4253c;
+    --saga-classic: #985a2a;
+    --saga-other: #0d8676;
+  }
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f2f3f9;
+  --surface: #ffffff;
+  --raised: #e8eaf4;
+  --line: #d3d7e8;
+  --fg: #161a2e;
+  --muted: #555d7c;
+  --primary: #f2c14e;
+  --on-primary: #1d1604;
+  --focus: #3346c4;
+  --danger: #c2273a;
+  --ok: #0f7a57;
+  --toast: #1b2142;
+
+  --saga-infinity: #c58a00;
+  --saga-multiverse: #7a40e0;
+  --saga-xmen: #1e66d6;
+  --saga-spider: #d4253c;
+  --saga-classic: #985a2a;
+  --saga-other: #0d8676;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-focus: var(--focus);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+
+  --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-sans: 'Barlow', system-ui, sans-serif;
+  --color-toast: var(--toast);
+  --font-weight-bold: 600;
+}
+
+html {
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes sheet-left {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes stamp {
+  40% {
+    transform: scale(1.18);
+  }
+}

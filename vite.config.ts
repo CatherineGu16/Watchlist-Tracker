@@ -8,6 +8,6 @@ export default defineConfig({
   base: '/watchlist-tracker/',
   plugins: [react(), tailwindcss()],
   test: {
-    include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
   },
 })
