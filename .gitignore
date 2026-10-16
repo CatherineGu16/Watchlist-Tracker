@@ -10,3 +10,4 @@ data/private/
 .vscode/*
 !.vscode/extensions.json
 .idea
+.playwright-mcp/
