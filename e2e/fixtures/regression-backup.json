@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2025-09-01T00:00:00.000Z",
+  "watches": [
+    {
+      "id": "reg-1",
+      "titleId": "captain-america-brave-new-world-2025",
+      "seasonId": null,
+      "startDate": "2025-03-01",
+      "endDate": "2025-03-01",
+      "approximate": false,
+      "episodesWatched": null,
+      "note": "",
+      "createdAt": "2025-03-01T00:00:00.000Z",
+      "updatedAt": "2025-03-01T00:00:00.000Z"
+    },
+    {
+      "id": "reg-2",
+      "titleId": "captain-america-brave-new-world-2025",
+      "seasonId": null,
+      "startDate": "2025-08-10",
+      "endDate": "2025-08-10",
+      "approximate": false,
+      "episodesWatched": null,
+      "note": "",
+      "createdAt": "2025-08-10T00:00:00.000Z",
+      "updatedAt": "2025-08-10T00:00:00.000Z"
+    },
+    {
+      "id": "reg-3",
+      "titleId": "werewolf-by-night-2022",
+      "seasonId": null,
+      "startDate": null,
+      "endDate": null,
+      "approximate": false,
+      "episodesWatched": null,
+      "note": "",
+      "createdAt": "2025-01-01T00:00:00.000Z",
+      "updatedAt": "2025-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "reg-4",
+      "titleId": "daredevil-born-again-2025",
+      "seasonId": "daredevil-born-again-2025-s1",
+      "startDate": null,
+      "endDate": "2025",
+      "approximate": true,
+      "episodesWatched": null,
+      "note": "",
+      "createdAt": "2025-04-01T00:00:00.000Z",
+      "updatedAt": "2025-04-01T00:00:00.000Z"
+    }
+  ],
+  "customTitles": [],
+  "customSeasons": [],
+  "titleOverrides": {}
+}

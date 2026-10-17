@@ -1,14 +1,8 @@
-import { expect, test, type Page } from '@playwright/test'
-import { fileURLToPath } from 'node:url'
-
-const BACKUP = fileURLToPath(new URL('./fixtures/backup.json', import.meta.url))
-
-const box = (page: Page, title: string) => page.getByRole('checkbox', { name: `${title} watched` })
-const sheet = (page: Page) => page.getByRole('dialog')
+import { expect, test } from '@playwright/test'
+import { box, importBackup, openList, openSettings, sheet } from './helpers.ts'
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('./')
-  await expect(page.getByRole('heading', { name: 'Watchlist' })).toBeVisible()
+  await openList(page)
 })
 
 test('check off a movie, undo, and keep it after reload', async ({ page }) => {
@@ -65,13 +59,7 @@ test('filter, sort and search', async ({ page }) => {
 })
 
 test('import a backup file', async ({ page }) => {
-  await page.getByRole('button', { name: 'Settings', exact: true }).click()
-  const chooser = page.waitForEvent('filechooser')
-  await sheet(page).getByRole('button', { name: 'Import…' }).click()
-  await (await chooser).setFiles(BACKUP)
-  await sheet(page).getByRole('button', { name: 'Merge (keep both)' }).click()
-  await expect(sheet(page).getByText('Imported 2 watches')).toBeVisible()
-  await page.keyboard.press('Escape')
+  await importBackup(page, 'backup.json')
   await expect(box(page, 'Captain America: Brave New World')).toHaveAttribute('aria-checked', 'true')
   await page.getByRole('searchbox', { name: 'Search titles' }).fill('born again')
   await expect(page.getByRole('button', { name: /^Daredevil: Born Again Series/ })).toContainText('New: S2')
@@ -96,7 +84,7 @@ test('syncs to a private GitHub repo (simulated)', async ({ page, context }) => 
     return json(200, { content: { sha: file.sha } })
   })
 
-  await page.getByRole('button', { name: 'Settings', exact: true }).click()
+  await openSettings(page)
   await sheet(page).getByLabel('GitHub username').fill('me')
   await sheet(page).getByLabel('Access key').fill('github_pat_example')
   await sheet(page).getByRole('button', { name: 'Connect' }).click()
