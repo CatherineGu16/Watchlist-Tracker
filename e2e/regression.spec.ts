@@ -2,9 +2,8 @@
  * Guards behavior the next round of changes (filters drawer, season history, home screen, adding
  * titles) is NOT meant to change. If one of these fails after those changes, something regressed.
  */
-import { expect, test } from '@playwright/test'
 import { readFileSync } from 'node:fs'
-import { box, catalog, importBackup, openList, openSettings, sheet, TODAY } from './helpers.ts'
+import { TODAY, box, catalog, expect, importBackup, openList, openSettings, sheet, test } from './helpers.ts'
 
 const mcu = catalog.titles.filter((t) => t.universe === 'mcu')
 const infinity = mcu.filter((t) => t.saga === 'Infinity Saga')

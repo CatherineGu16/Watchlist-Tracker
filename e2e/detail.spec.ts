@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { box, importBackup, openList, sheet, TODAY } from './helpers.ts'
+import { TODAY, box, expect, importBackup, openList, sheet, test } from './helpers.ts'
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(TODAY)

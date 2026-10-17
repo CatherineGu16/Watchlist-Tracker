@@ -31,7 +31,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {/* Above panels (z-50) and menus (z-60): on phones the bottom panel would otherwise cover Undo. */}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-[70] flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-[70] flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+4.5rem)] lg:pb-4"
       >
         {toast && (
           <div

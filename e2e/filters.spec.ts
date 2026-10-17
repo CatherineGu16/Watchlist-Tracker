@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { catalog, openList, sheet, TODAY } from './helpers.ts'
+import { TODAY, catalog, expect, openList, sheet, test } from './helpers.ts'
 
 const inPhase = (p: number) =>
   catalog.titles.filter(

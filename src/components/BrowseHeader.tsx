@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import type { TitleView } from '../lib/catalogView.ts'
 import { todayIso } from '../lib/partialDate.ts'
 import type { Universe } from '../lib/types.ts'
@@ -12,23 +11,19 @@ const UNIVERSES: { id: Universe; label: string }[] = [
 ]
 
 /**
- * The bar is the whole universe at a glance: one segment per saga, sized by its share of titles,
- * filled by how much of it you've watched.
+ * Top of Browse: MCU / Other Marvel tabs and progress. The bar is the whole universe at a glance:
+ * one segment per saga, sized by its share of titles, filled by how much of it you've watched.
  */
-export function Header({
+export function BrowseHeader({
   views,
   universe,
   onUniverse,
-  onSettings,
   onOpen,
-  syncChip,
 }: {
   onOpen: (id: string) => void
   views: TitleView[]
   universe: Universe
   onUniverse: (u: Universe) => void
-  onSettings: () => void
-  syncChip?: ReactNode
 }) {
   const mine = views.filter((v) => v.title.universe === universe)
   const watched = mine.filter((v) => v.summary.status === 'watched').length
@@ -38,25 +33,8 @@ export function Header({
   const thisYear = watchesInYear(views, today.slice(0, 4))
 
   return (
-    <header className="px-3 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-4">
-      <div className="flex items-center gap-2">
-        <h1 className="mr-auto font-display text-[2rem] leading-none font-semibold tracking-tight">Watchlist</h1>
-        {syncChip}
-        <button
-          onClick={onSettings}
-          aria-label="Settings"
-          className="grid size-11 place-items-center rounded-full text-muted hover:bg-surface hover:text-fg"
-        >
-          <svg viewBox="0 0 24 24" className="size-6" aria-hidden="true">
-            <path
-              fill="currentColor"
-              d="M12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm7.4-2.5a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L11 21h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5Z"
-            />
-          </svg>
-        </button>
-      </div>
-
-      <div role="tablist" aria-label="Universe" className="mt-4 flex gap-6">
+    <div className="px-3 sm:px-4">
+      <div role="tablist" aria-label="Universe" className="flex gap-6">
         {UNIVERSES.map((u) => {
           const items = views.filter((v) => v.title.universe === u.id)
           const done = items.filter((v) => v.summary.status === 'watched').length
@@ -121,7 +99,7 @@ export function Header({
           {thisYear > 0 ? `${plural(thisYear, 'watch', 'watches')} logged in ${today.slice(0, 4)}` : `Nothing logged yet in ${today.slice(0, 4)}`}
         </span>
       </div>
-    </header>
+    </div>
   )
 }
 

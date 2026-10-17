@@ -10,7 +10,9 @@ const OPTIONS: { id: ThemePref; label: string }[] = [
 
 export function ThemePicker() {
   const [pref, setPref] = usePersistentState<ThemePref>(THEME_KEY, readThemePref())
-  useEffect(() => applyTheme(pref), [pref])
+  useEffect(() => {
+    applyTheme(pref)
+  }, [pref])
 
   return (
     <section className="rounded-xl border border-line p-4">

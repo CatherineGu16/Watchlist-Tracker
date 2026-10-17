@@ -3,10 +3,18 @@ import 'fake-indexeddb/auto'
 import '@testing-library/jest-dom/vitest'
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import App from './App.tsx'
 
 afterEach(cleanup)
+// Each test starts on Home with no panel open; the route lives in the URL, which jsdom keeps between tests.
+beforeEach(() => window.history.replaceState(null, '', '#/'))
+
+/** The list lives on Browse; the app opens on Home. */
+async function renderBrowse(user: ReturnType<typeof userEvent.setup>) {
+  render(<App />)
+  await user.click((await screen.findAllByRole('link', { name: 'Browse' }))[0])
+}
 
 // jsdom lacks the layout APIs Radix menus measure with.
 globalThis.ResizeObserver ??= class {
@@ -22,7 +30,7 @@ Element.prototype.releasePointerCapture ??= () => {}
 describe('App', () => {
   it('checks off a movie, shows Undo, and undoes it', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    await renderBrowse(user)
     const box = await screen.findByRole('checkbox', { name: 'Iron Man watched' })
     expect(box).toHaveAttribute('aria-checked', 'false')
 
@@ -37,7 +45,7 @@ describe('App', () => {
 
   it('filters to TV and starts, counts and finishes a season', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    await renderBrowse(user)
     await user.click(await screen.findByRole('radio', { name: 'TV' }))
     expect(screen.queryByRole('checkbox', { name: 'Iron Man watched' })).not.toBeInTheDocument()
 
@@ -54,7 +62,7 @@ describe('App', () => {
 
   it('marks seasons watched long ago without inventing dates', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    await renderBrowse(user)
     await user.click(await screen.findByRole('button', { name: /^Loki: 0 of 2 seasons watched/ }))
     const sheet = await screen.findByRole('dialog')
     await user.click(within(sheet).getByRole('button', { name: 'More for Loki' }))
@@ -65,7 +73,7 @@ describe('App', () => {
 
   it('switches to Other Marvel and searches', async () => {
     const user = userEvent.setup()
-    render(<App />)
+    await renderBrowse(user)
     await user.click(await screen.findByRole('tab', { name: /Other Marvel/ }))
     await user.type(screen.getByRole('searchbox', { name: 'Search titles' }), 'shield')
     expect(await screen.findByText('Agents of S.H.I.E.L.D.')).toBeInTheDocument()

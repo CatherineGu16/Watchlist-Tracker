@@ -1,15 +1,32 @@
-import { expect, type Page } from '@playwright/test'
+import { test as base, expect, type Page } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import type { Catalog } from '../src/lib/types.ts'
+
+/** Every spec uses this `test`: it fails any test whose page throws an uncaught error, even if the UI looked fine. */
+export const test = base.extend({
+  page: async ({ page }, runTest) => {
+    const errors: string[] = []
+    page.on('pageerror', (e) => errors.push(e.stack ?? e.message))
+    await runTest(page)
+    expect(errors, 'uncaught errors in the page').toEqual([])
+  },
+})
+export { expect }
 
 /**
  * The one place that knows how to reach each screen. When navigation changes (a home screen in
  * front of the list, a bottom tab bar), update these and every spec keeps working.
  */
 export async function openList(page: Page) {
-  await page.goto('./')
+  await openHome(page)
+  await page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'Browse' }).click()
   await expect(page.getByRole('searchbox', { name: 'Search titles' })).toBeVisible()
+}
+
+export async function openHome(page: Page) {
+  await page.goto('./')
+  await expect(page.getByRole('heading', { name: 'Continue watching' })).toBeVisible()
 }
 
 export async function openSettings(page: Page) {

@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test'
-import { box, importBackup, openList, openSettings, sheet } from './helpers.ts'
+import { box, expect, importBackup, openList, openSettings, sheet, test } from './helpers.ts'
 
 test.beforeEach(async ({ page }) => {
   await openList(page)
