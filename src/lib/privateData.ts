@@ -6,23 +6,30 @@ import type { PrivateData, Season, Title, Watch } from './types.ts'
  * as tombstones. Used for Import (merge) now and GitHub sync later.
  */
 export function mergeData(a: PrivateData, b: PrivateData): PrivateData {
-  const watches = new Map<string, Watch>()
-  for (const w of [...a.watches, ...b.watches]) {
-    const have = watches.get(w.id)
-    if (!have || w.updatedAt > have.updatedAt || (w.updatedAt === have.updatedAt && w.deleted)) watches.set(w.id, w)
-  }
-  const byId = <T extends { id: string }>(xs: T[], ys: T[]) => [...new Map([...xs, ...ys].map((x) => [x.id, x])).values()]
   const overrides = { ...a.titleOverrides }
   for (const [id, o] of Object.entries(b.titleOverrides)) overrides[id] = { ...overrides[id], ...o }
 
   return {
     schemaVersion: 1,
     updatedAt: a.updatedAt > b.updatedAt ? a.updatedAt : b.updatedAt,
-    watches: [...watches.values()],
-    customTitles: byId<Title>(a.customTitles, b.customTitles),
-    customSeasons: byId<Season>(a.customSeasons, b.customSeasons),
+    watches: newestById<Watch>(a.watches, b.watches),
+    customTitles: newestById<Title>(a.customTitles, b.customTitles),
+    customSeasons: newestById<Season>(a.customSeasons, b.customSeasons),
     titleOverrides: overrides,
   }
+}
+
+type Synced = { id: string; updatedAt?: string; deleted?: boolean }
+
+/** Per id, the newer updatedAt wins; on a tie, a delete wins so it can't be undone by an older copy. */
+function newestById<T extends Synced>(xs: T[], ys: T[]): T[] {
+  const out = new Map<string, T>()
+  for (const x of [...xs, ...ys]) {
+    const have = out.get(x.id)
+    const [t, h] = [x.updatedAt ?? '', have?.updatedAt ?? '']
+    if (!have || t > h || (t === h && x.deleted)) out.set(x.id, x)
+  }
+  return [...out.values()]
 }
 
 /** Checks a file someone picked for Import before it can touch your data. */
@@ -55,8 +62,13 @@ export function parsePrivateData(input: unknown): PrivateData {
       note: typeof w.note === 'string' ? w.note : '',
       createdAt: typeof w.createdAt === 'string' ? w.createdAt : w.updatedAt,
     })),
-    customTitles: Array.isArray(o.customTitles) ? (o.customTitles as Title[]) : [],
-    customSeasons: Array.isArray(o.customSeasons) ? (o.customSeasons as Season[]) : [],
+    // Titles and seasons you added: drop anything malformed rather than letting it break the list.
+    customTitles: (Array.isArray(o.customTitles) ? (o.customTitles as Title[]) : []).filter(
+      (t) => isObject(t) && typeof t.id === 'string' && typeof t.title === 'string' && ['movie', 'series', 'special'].includes(t.type),
+    ),
+    customSeasons: (Array.isArray(o.customSeasons) ? (o.customSeasons as Season[]) : []).filter(
+      (s) => isObject(s) && typeof s.id === 'string' && typeof s.titleId === 'string' && typeof s.number === 'number',
+    ),
     titleOverrides: isObject(o.titleOverrides) ? (o.titleOverrides as PrivateData['titleOverrides']) : {},
   }
 }

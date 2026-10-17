@@ -28,10 +28,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={show}>
       {children}
-      {/* Above panels (z-50) and menus (z-60): on phones the bottom panel would otherwise cover Undo. */}
+      {/*
+        Above panels (z-50) and menus (z-60). Phones show it at the top: bottom panels and the tab
+        bar own the bottom edge, and a toast there covered their buttons. Bottom panels stop at 85%
+        height, so the top strip is always free. From 640px panels open from the side, so it goes
+        back to the bottom, above the tab bar until desktop.
+      */}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-[70] flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+4.5rem)] lg:pb-4"
+        className="pointer-events-none fixed inset-x-0 top-0 z-[70] flex justify-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:top-auto sm:bottom-0 sm:pt-0 sm:pb-[calc(env(safe-area-inset-bottom)+4.5rem)] lg:pb-4"
       >
         {toast && (
           <div

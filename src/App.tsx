@@ -7,6 +7,7 @@ import { Settings } from './components/Settings.tsx'
 import { TitleDetail } from './components/TitleDetail.tsx'
 import { TitleList } from './components/TitleList.tsx'
 import { ToastProvider } from './components/Toast.tsx'
+import { TitleForm } from './components/TitleForm.tsx'
 import { Toolbar } from './components/Toolbar.tsx'
 import { SyncChip } from './components/SyncChip.tsx'
 import { StoreContext, SyncContext } from './store/StoreContext.tsx'
@@ -56,6 +57,7 @@ function Shell({ store }: { store: WatchlistStore }) {
   const [editLatestFor, setEditLatestFor] = useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [form, setForm] = useState<{ open: boolean; editingId: string | null }>({ open: false, editingId: null })
 
   const openDetail = useCallback(
     (id: string, opts?: OpenDetailOptions) => {
@@ -94,10 +96,24 @@ function Shell({ store }: { store: WatchlistStore }) {
 
   const openView = route.titleId ? (views.find((v) => v.title.id === route.titleId) ?? null) : null
   const openSettings = () => setSettingsOpen(true)
+  const openAdd = () => setForm({ open: true, editingId: null })
+  const editingView = form.editingId ? (views.find((v) => v.title.id === form.editingId) ?? null) : null
 
   return (
     <div className="mx-auto min-h-dvh max-w-3xl pb-[calc(env(safe-area-inset-bottom)+6rem)] lg:max-w-6xl lg:pb-24">
-      <AppBar page={route.page} onSettings={openSettings} syncChip={<SyncChip onSettings={openSettings} />} />
+      <AppBar
+        page={route.page}
+        onSettings={openSettings}
+        syncChip={<SyncChip onSettings={openSettings} />}
+        actions={
+          <button onClick={openAdd} className="mr-1 hidden min-h-10 items-center gap-1.5 rounded-lg bg-raised px-3 font-bold hover:bg-line lg:inline-flex">
+            <svg viewBox="0 0 20 20" className="size-4" aria-hidden="true">
+              <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Add title
+          </button>
+        }
+      />
       {state.error && (
         <p role="alert" className="mx-3 mb-3 rounded-lg bg-danger/15 p-3 text-sm text-danger sm:mx-4">
           {state.error}
@@ -151,8 +167,25 @@ function Shell({ store }: { store: WatchlistStore }) {
         </main>
       )}
 
-      <TabBar page={route.page} />
-      <TitleDetail view={openView} actions={actions} editLatest={editLatestFor === route.titleId} onClose={closeTitle} />
+      <TabBar page={route.page} onAdd={openAdd} />
+      <TitleDetail
+        view={openView}
+        actions={actions}
+        editLatest={editLatestFor === route.titleId}
+        onClose={closeTitle}
+        onEditTitle={(v) => setForm({ open: true, editingId: v.title.id })}
+      />
+      <TitleForm
+        open={form.open}
+        onOpenChange={(open) => setForm((f) => ({ ...f, open }))}
+        views={views}
+        editing={editingView}
+        onSave={(input, seasons) => (editingView ? actions.updateTitle(editingView.title.id, input) : actions.addTitle(input, seasons))}
+        onOpenExisting={(id) => {
+          setForm({ open: false, editingId: null })
+          openDetail(id)
+        }}
+      />
       <Settings open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   )

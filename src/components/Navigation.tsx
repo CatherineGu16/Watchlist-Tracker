@@ -54,7 +54,7 @@ export function AppBar({ page, onSettings, syncChip, actions }: { page: Page; on
 }
 
 /** Phones and tablets: pages at the bottom, in thumb reach. Desktop uses the links in the app bar. */
-export function TabBar({ page }: { page: Page }) {
+export function TabBar({ page, onAdd }: { page: Page; onAdd: () => void }) {
   return (
     <nav
       aria-label="Pages"
@@ -75,6 +75,15 @@ export function TabBar({ page }: { page: Page }) {
             </a>
           </li>
         ))}
+        <li className="flex-1">
+          <button onClick={onAdd} className="flex min-h-14 w-full flex-col items-center justify-center gap-0.5 text-xs font-bold text-muted">
+            <svg viewBox="0 0 24 24" className="size-6" aria-hidden="true">
+              <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            Add
+          </button>
+        </li>
       </ul>
     </nav>
   )

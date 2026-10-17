@@ -18,6 +18,11 @@ export interface Title {
   tmdbId: number | null
   posterPath: string | null
   note?: string
+  /** Set on titles you added yourself (stored in your private data, not the catalog). */
+  custom?: boolean
+  /** Your own titles and seasons sync like watches: newest edit wins, deletes are tombstones. */
+  updatedAt?: string
+  deleted?: boolean
 }
 
 export interface Season {
@@ -29,6 +34,9 @@ export interface Season {
   premiereDate: PartialDate | null
   phase: number | null
   note?: string
+  custom?: boolean
+  updatedAt?: string
+  deleted?: boolean
 }
 
 /** Public, shipped with the app. Facts about titles, nothing about the viewer. */

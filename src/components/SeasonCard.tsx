@@ -19,11 +19,14 @@ export function SeasonCard({
   season,
   actions,
   onHistory,
+  onEdit,
 }: {
   view: TitleView
   season: Season
   actions: Actions
   onHistory: () => void
+  /** Edit or delete a season you added. */
+  onEdit: () => void
 }) {
   const today = todayIso()
   const watches = view.watches.filter((w) => w.seasonId === season.id).sort(compareWatches)
@@ -38,6 +41,7 @@ export function SeasonCard({
     watches.length ? { label: `Watch history (${watches.length})`, onSelect: onHistory } : { label: 'Add a past watch', onSelect: onHistory },
     ...(status === 'watched' && !open ? [{ label: 'Log a rewatch today', onSelect: () => actions.markSeasonWatched(view, season) }] : []),
     ...(status === 'unwatched' ? [{ label: 'Watched, date unknown', onSelect: () => actions.markSeasonsWatchedUndated(view, [season]) }] : []),
+    ...(season.custom ? [{ label: 'Edit or delete season', onSelect: onEdit }] : []),
   ]
 
   return (

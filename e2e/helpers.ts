@@ -52,3 +52,9 @@ export async function importBackup(page: Page, file: string, mode: 'Merge (keep 
   await page.keyboard.press('Escape')
   await expect(sheet(page)).toHaveCount(0)
 }
+
+/** "Add" in the phone tab bar, "Add title" in the desktop top bar. */
+export async function openAddTitle(page: Page) {
+  await page.getByRole('button', { name: /^Add( title)?$/ }).click()
+  await expect(sheet(page).getByRole('heading', { name: 'Add a title' })).toBeVisible()
+}

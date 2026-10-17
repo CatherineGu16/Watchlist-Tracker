@@ -10,10 +10,10 @@ export interface TitleView {
 
 /** Public catalog + your custom titles and overrides + your watches → what the screen shows. */
 export function buildTitleViews(catalog: Catalog, data: PrivateData, today: PartialDate): TitleView[] {
-  const titles = [...catalog.titles, ...data.customTitles].map((t) =>
+  const titles = [...catalog.titles, ...data.customTitles.filter((t) => !t.deleted)].map((t) =>
     data.titleOverrides[t.id] ? { ...t, ...data.titleOverrides[t.id], id: t.id } : t,
   )
-  const seasons = [...catalog.seasons, ...data.customSeasons]
+  const seasons = [...catalog.seasons, ...data.customSeasons.filter((s) => !s.deleted)]
   const seasonsBy = groupBy(seasons, (s) => s.titleId)
   const watchesBy = groupBy(
     data.watches.filter((w) => !w.deleted),

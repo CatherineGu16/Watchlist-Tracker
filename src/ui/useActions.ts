@@ -15,7 +15,19 @@ import {
   type WatchPatch,
 } from '../lib/watchActions.ts'
 import { useToast } from '../components/toastContext.ts'
+import {
+  addCustomTitle,
+  addSeason,
+  deleteCustomSeason,
+  deleteCustomTitle,
+  newCustomTitleId,
+  updateCustomSeason,
+  updateCustomTitle,
+  type SeasonInput,
+  type TitleInput,
+} from '../lib/customTitles.ts'
 import { useStore } from '../store/StoreContext.tsx'
+import { catalog } from '../store/useWatchlist.ts'
 import type { Edit } from '../store/watchlistStore.ts'
 
 /** Every change goes through here: apply, save, and confirm with an Undo. */
@@ -76,6 +88,30 @@ export function useActions(openDetail?: (titleId: string, opts?: OpenDetailOptio
         run(`Marked ${seasons.length === 1 ? seasons[0].label : `${seasons.length} seasons`} watched`, (d, c) =>
           seasons.reduce((acc, s) => logWatch(acc, c, { titleId: v.title.id, seasonId: s.id, startDate: null, endDate: null }), d),
         )
+      },
+      /** Returns the new title's id so the caller can open it. */
+      addTitle(input: TitleInput, seasons: SeasonInput[]): string | null {
+        const id = newCustomTitleId(input.title, () => crypto.randomUUID())
+        const label = `Added ${input.title.trim()}`
+        if (!store.apply((d, c) => addCustomTitle(d, c, id, input, seasons), label)) return null
+        toast(label, [...(openDetail ? [{ label: 'Open', onClick: () => openDetail(id) }] : []), undo])
+        return id
+      },
+      updateTitle(id: string, input: TitleInput) {
+        run(`Updated ${input.title.trim()}`, (d, c) => updateCustomTitle(d, c, id, input))
+      },
+      deleteTitle(v: TitleView) {
+        run(`Deleted ${v.title.title}`, (d, c) => deleteCustomTitle(d, c, v.title.id))
+      },
+      addSeason(v: TitleView, input: SeasonInput) {
+        const next = Math.max(0, ...v.seasons.map((s) => s.number)) + 1
+        run(`Added Season ${next} to ${v.title.title}`, (d, c) => addSeason(d, c, v.title, catalog.seasons, input))
+      },
+      updateSeason(v: TitleView, s: Season, input: SeasonInput) {
+        run(`Updated ${v.title.title} ${s.label}`, (d, c) => updateCustomSeason(d, c, s.id, input))
+      },
+      deleteSeason(v: TitleView, s: Season) {
+        run(`Deleted ${v.title.title} ${s.label}`, (d, c) => deleteCustomSeason(d, c, s.id))
       },
       /** Episode stepper: saved quietly, no toast for every tap. */
       setEpisodes(watchId: string, episodes: number, episodeCount: number | null) {

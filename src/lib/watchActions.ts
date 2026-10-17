@@ -81,11 +81,20 @@ export function setEpisodes(data: PrivateData, ctx: EditContext, id: string, epi
  * records that differ get the snapshot's version with a fresh updatedAt; records added since are deleted.
  */
 export function revertTo(current: PrivateData, snapshot: PrivateData, ctx: EditContext): PrivateData {
-  const before = new Map(snapshot.watches.map((w) => [w.id, w]))
-  const watches = current.watches.map((w) => {
-    const old = before.get(w.id)
-    if (!old) return w.deleted ? w : { ...w, deleted: true, updatedAt: ctx.now }
-    return JSON.stringify(old) === JSON.stringify(w) ? w : { ...old, updatedAt: ctx.now }
+  return {
+    ...snapshot,
+    updatedAt: ctx.now,
+    watches: revertRecords(current.watches, snapshot.watches, ctx.now),
+    customTitles: revertRecords(current.customTitles, snapshot.customTitles, ctx.now),
+    customSeasons: revertRecords(current.customSeasons, snapshot.customSeasons, ctx.now),
+  }
+}
+
+function revertRecords<T extends { id: string; updatedAt?: string; deleted?: boolean }>(current: T[], snapshot: T[], now: string): T[] {
+  const before = new Map(snapshot.map((x) => [x.id, x]))
+  return current.map((x) => {
+    const old = before.get(x.id)
+    if (!old) return x.deleted ? x : { ...x, deleted: true, updatedAt: now }
+    return JSON.stringify(old) === JSON.stringify(x) ? x : { ...old, updatedAt: now }
   })
-  return { ...snapshot, updatedAt: ctx.now, watches }
 }
