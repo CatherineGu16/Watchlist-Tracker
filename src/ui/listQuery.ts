@@ -17,6 +17,10 @@ export interface ListQuery {
   sort: SortKey
 }
 
+/** The part of the query set from the Filters drawer or sidebar. */
+export type FilterValues = Pick<ListQuery, 'sagas' | 'phase' | 'status'>
+export const NO_FILTERS: FilterValues = { sagas: [], phase: null, status: 'all' }
+
 export const DEFAULT_QUERY: ListQuery = {
   universe: 'mcu',
   type: 'all',

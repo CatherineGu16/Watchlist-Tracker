@@ -8,6 +8,7 @@ export function Sheet({
   title,
   description,
   accent,
+  footer,
   children,
 }: {
   open: boolean
@@ -15,6 +16,8 @@ export function Sheet({
   title: ReactNode
   description?: ReactNode
   accent?: string
+  /** Pinned under the scrolling content, e.g. an Apply button. */
+  footer?: ReactNode
   children: ReactNode
 }) {
   return (
@@ -42,7 +45,14 @@ export function Sheet({
               </svg>
             </Dialog.Close>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">{children}</div>
+          <div
+            className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 ${footer ? 'pb-4' : 'pb-[max(1.5rem,env(safe-area-inset-bottom))]'}`}
+          >
+            {children}
+          </div>
+          {footer && (
+            <div className="border-t border-line bg-surface px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">{footer}</div>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

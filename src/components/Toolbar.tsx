@@ -1,7 +1,5 @@
-import { useId, useState, type ReactNode } from 'react'
-import type { ItemStatus } from '../lib/status.ts'
+import type { ReactNode } from 'react'
 import { activeFilterCount, type ListQuery, type SortKey, type TypeFilter } from '../ui/listQuery.ts'
-import { sagaColor } from '../ui/sagas.ts'
 
 const TYPES: { id: TypeFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -18,29 +16,19 @@ const SORTS: { id: SortKey; label: string; mcuOnly?: boolean }[] = [
   { id: 'last-watched', label: 'Last watched' },
 ]
 
-const STATUSES: { id: ItemStatus | 'all'; label: string }[] = [
-  { id: 'all', label: 'Any' },
-  { id: 'unwatched', label: 'Not watched' },
-  { id: 'in-progress', label: 'In progress' },
-  { id: 'watched', label: 'Watched' },
-  { id: 'upcoming', label: 'Upcoming' },
-]
-
+/** Search, sort and type stay one tap away; the rest of the filters open in a drawer (or sit in the desktop sidebar). */
 export function Toolbar({
   query,
   onChange,
-  sagas,
-  phases,
-  resultCount,
+  onOpenFilters,
+  children,
 }: {
   query: ListQuery
   onChange: (q: Partial<ListQuery>) => void
-  sagas: string[]
-  phases: number[]
-  resultCount: number
+  onOpenFilters: () => void
+  /** Active filter chips, shown under the controls. */
+  children?: ReactNode
 }) {
-  const [open, setOpen] = useState(false)
-  const panelId = useId()
   const filters = activeFilterCount({ ...query, type: 'all' })
   const sorts = SORTS.filter((s) => !s.mcuOnly || query.universe === 'mcu')
 
@@ -94,78 +82,18 @@ export function Toolbar({
           ))}
         </div>
         <button
-          aria-expanded={open}
-          aria-controls={panelId}
-          onClick={() => setOpen((o) => !o)}
-          className={`ml-auto min-h-10 rounded-lg px-3 text-sm font-bold ${open || filters ? 'bg-raised text-fg' : 'text-muted hover:text-fg'}`}
+          onClick={onOpenFilters}
+          aria-haspopup="dialog"
+          className={`ml-auto inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-sm font-bold lg:hidden ${filters ? 'bg-raised text-fg' : 'text-muted hover:text-fg'}`}
         >
-          Filters{filters > 0 && <span className="ml-1.5 rounded-full bg-primary px-1.5 text-on-primary tabular-nums">{filters}</span>}
+          <svg viewBox="0 0 20 20" className="size-4" aria-hidden="true">
+            <path d="M3 5h14M6 10h8M8.5 15h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+          Filters
+          {filters > 0 && <span className="rounded-full bg-primary px-1.5 text-on-primary tabular-nums">{filters}</span>}
         </button>
       </div>
-
-      {open && (
-        <div id={panelId} className="mt-3 space-y-3 pb-1">
-          <ChipGroup label="Saga">
-            {sagas.map((s) => {
-              const on = query.sagas.includes(s)
-              return (
-                <Chip key={s} on={on} onClick={() => onChange({ sagas: on ? query.sagas.filter((x) => x !== s) : [...query.sagas, s] })}>
-                  <span className="size-2 rounded-full" style={{ background: sagaColor(s) }} aria-hidden="true" />
-                  {s}
-                </Chip>
-              )
-            })}
-          </ChipGroup>
-          {phases.length > 0 && (
-            <ChipGroup label="Phase">
-              <Chip on={query.phase === null} onClick={() => onChange({ phase: null })}>
-                Any
-              </Chip>
-              {phases.map((p) => (
-                <Chip key={p} on={query.phase === p} onClick={() => onChange({ phase: query.phase === p ? null : p })}>
-                  {p}
-                </Chip>
-              ))}
-            </ChipGroup>
-          )}
-          <ChipGroup label="Status">
-            {STATUSES.map((s) => (
-              <Chip key={s.id} on={query.status === s.id} onClick={() => onChange({ status: s.id })}>
-                {s.label}
-              </Chip>
-            ))}
-          </ChipGroup>
-          <div className="flex items-center justify-between text-sm text-muted">
-            <span aria-live="polite">{resultCount} titles</span>
-            {filters > 0 && (
-              <button className="min-h-10 px-2 font-bold text-fg underline-offset-4 hover:underline" onClick={() => onChange({ sagas: [], phase: null, status: 'all' })}>
-                Clear filters
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function ChipGroup({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <fieldset>
-      <legend className="mb-1.5 text-sm text-muted">{label}</legend>
-      <div className="flex flex-wrap gap-1.5">{children}</div>
-    </fieldset>
-  )
-}
-
-function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) {
-  return (
-    <button
-      aria-pressed={on}
-      onClick={onClick}
-      className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-sm transition-colors ${on ? 'border-fg bg-fg text-bg' : 'border-line text-fg hover:border-muted'}`}
-    >
       {children}
-    </button>
+    </div>
   )
 }

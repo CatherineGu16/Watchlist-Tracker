@@ -1,4 +1,5 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { ActiveFilterChips, FilterDrawer, FilterSidebar } from './components/Filters.tsx'
 import { Header } from './components/Header.tsx'
 import { Settings } from './components/Settings.tsx'
 import { TitleDetail } from './components/TitleDetail.tsx'
@@ -9,7 +10,17 @@ import { SyncChip } from './components/SyncChip.tsx'
 import { StoreContext, SyncContext } from './store/StoreContext.tsx'
 import { loadServices, useTitleViews, useWatchlistState, type AppServices } from './store/useWatchlist.ts'
 import type { WatchlistStore } from './store/watchlistStore.ts'
-import { DEFAULT_QUERY, activeFilterCount, filterViews, groupViews, phasesIn, sagasIn, sortViews, type ListQuery } from './ui/listQuery.ts'
+import {
+  DEFAULT_QUERY,
+  activeFilterCount,
+  filterViews,
+  groupViews,
+  phasesIn,
+  sagasIn,
+  sortViews,
+  type FilterValues,
+  type ListQuery,
+} from './ui/listQuery.ts'
 import { useActions } from './ui/useActions.ts'
 import { usePersistentState } from './ui/usePersistentState.ts'
 
@@ -40,6 +51,7 @@ function Shell({ store }: { store: WatchlistStore }) {
   const [query, setQuery] = usePersistentState<ListQuery>('watchlist.query.v1', DEFAULT_QUERY, reviveQuery)
   const [openId, setOpenId] = useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const actions = useActions(useCallback((id: string) => setOpenId(id), []))
 
   const deferred = useDeferredValue(query)
@@ -60,10 +72,13 @@ function Shell({ store }: { store: WatchlistStore }) {
       return next
     })
 
+  const filterValues: FilterValues = { sagas: query.sagas, phase: query.phase, status: query.status }
+  const countFor = (f: FilterValues) => filterViews(views, { ...query, ...f }).length
+
   const openView = openId ? (views.find((v) => v.title.id === openId) ?? null) : null
 
   return (
-    <div className="mx-auto min-h-dvh max-w-3xl pb-24">
+    <div className="mx-auto min-h-dvh max-w-3xl pb-24 lg:max-w-6xl">
       <Header
         views={views}
         universe={query.universe}
@@ -91,17 +106,31 @@ function Shell({ store }: { store: WatchlistStore }) {
           </button>
         </div>
       )}
-      <div className="mt-4">
-        <Toolbar query={query} onChange={update} sagas={sagas} phases={phases} resultCount={filtered.length} />
-        <TitleList
-          groups={groups}
-          showYear={deferred.sort !== 'release'}
-          onToggle={actions.toggleMovie}
-          onOpen={setOpenId}
-          filtered={activeFilterCount(query) > 0 || query.search !== ''}
-          onClearFilters={() => update({ type: 'all', sagas: [], phase: null, status: 'all', search: '' })}
-        />
+      <div className="mt-4 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+        <FilterSidebar value={filterValues} onChange={update} sagas={sagas} phases={phases} />
+        <div className="min-w-0">
+          <Toolbar query={query} onChange={update} onOpenFilters={() => setFiltersOpen(true)}>
+            <ActiveFilterChips value={filterValues} onChange={update} />
+          </Toolbar>
+          <TitleList
+            groups={groups}
+            showYear={deferred.sort !== 'release'}
+            onToggle={actions.toggleMovie}
+            onOpen={setOpenId}
+            filtered={activeFilterCount(query) > 0 || query.search !== ''}
+            onClearFilters={() => update({ type: 'all', sagas: [], phase: null, status: 'all', search: '' })}
+          />
+        </div>
       </div>
+      <FilterDrawer
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        value={filterValues}
+        onApply={update}
+        countFor={countFor}
+        sagas={sagas}
+        phases={phases}
+      />
       <TitleDetail view={openView} actions={actions} onClose={() => setOpenId(null)} />
       <Settings open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
