@@ -77,6 +77,28 @@ export function toEntries(views: TitleView[], bySeason: boolean, today: PartialD
   })
 }
 
+const SORTS: SortKey[] = ['release', 'release-seasons', 'story', 'title', 'last-watched', 'saga']
+const TYPES: TypeFilter[] = ['all', 'movie', 'series', 'special']
+const STATUSES: (ItemStatus | 'all')[] = ['all', 'watched', 'in-progress', 'unwatched', 'upcoming']
+
+/**
+ * Reads list settings saved on this device. Anything missing, renamed in a later version, or
+ * damaged falls back to its default instead of breaking the list. Search is never restored.
+ */
+export function reviveQuery(saved: unknown): ListQuery {
+  const s = (typeof saved === 'object' && saved !== null ? saved : {}) as Record<string, unknown>
+  const pick = <T,>(value: unknown, allowed: readonly T[], fallback: T): T => (allowed.includes(value as T) ? (value as T) : fallback)
+  return {
+    universe: pick(s.universe, ['mcu', 'other'] as const, DEFAULT_QUERY.universe),
+    type: pick(s.type, TYPES, DEFAULT_QUERY.type),
+    sagas: Array.isArray(s.sagas) ? s.sagas.filter((x): x is string => typeof x === 'string') : [],
+    phase: typeof s.phase === 'number' && Number.isInteger(s.phase) ? s.phase : null,
+    status: pick(s.status, STATUSES, DEFAULT_QUERY.status),
+    search: '',
+    sort: pick(s.sort, SORTS, DEFAULT_QUERY.sort),
+  }
+}
+
 /** Ignores case, accents and punctuation: "shield" finds "Agents of S.H.I.E.L.D.". */
 export function normalize(text: string): string {
   return text

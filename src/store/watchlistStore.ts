@@ -24,9 +24,16 @@ export interface WatchlistStore {
   getState(): WatchlistState
   subscribe(listener: () => void): () => void
   init(): Promise<void>
-  /** Applies an edit right away, then saves in the background. False if the edit was refused. */
-  apply(edit: Edit, label: string): boolean
-  undo(): void
+  /**
+   * Applies an edit right away, then saves in the background. Returns the edit's undo id, or null
+   * if the edit was refused.
+   */
+  apply(edit: Edit, label: string): number | null
+  /**
+   * Reverts the latest edit, or with an id only that edit, and only while nothing has changed
+   * since (so an old confirmation's Undo can't revert something else). False if refused.
+   */
+  undo(id?: number): boolean
   /** Import: merge keeps edits from both; replace swaps in the file as-is. */
   importData(incoming: PrivateData, mode: 'merge' | 'replace'): void
   /**
@@ -53,7 +60,8 @@ export function createWatchlistStore(
     undoLabel: null,
   }
   const listeners = new Set<() => void>()
-  const undoStack: { label: string; data: PrivateData }[] = []
+  const undoStack: { id: number; label: string; data: PrivateData }[] = []
+  let nextUndoId = 1
 
   const set = (patch: Partial<WatchlistState>) => {
     state = { ...state, ...patch }
@@ -78,13 +86,16 @@ export function createWatchlistStore(
     })
   }
 
-  const commit = (data: PrivateData, label: string | null) => {
+  const commit = (data: PrivateData, label: string | null): number | null => {
+    let id: number | null = null
     if (label) {
-      undoStack.push({ label, data: state.data })
+      id = nextUndoId++
+      undoStack.push({ id, label, data: state.data })
       if (undoStack.length > UNDO_LIMIT) undoStack.shift()
     }
     set({ data, undoLabel: undoStack.at(-1)?.label ?? null })
     persist()
+    return id
   }
 
   return {
@@ -102,19 +113,20 @@ export function createWatchlistStore(
       }
     },
     apply(edit, label) {
-      if (state.status !== 'ready') return false
+      if (state.status !== 'ready') return null
       try {
-        commit(edit(state.data, ctx()), label)
-        return true
+        return commit(edit(state.data, ctx()), label)
       } catch (e) {
         set({ error: (e as Error).message })
-        return false
+        return null
       }
     },
-    undo() {
-      const last = undoStack.pop()
-      if (!last) return
+    undo(id) {
+      const last = undoStack.at(-1)
+      if (!last || (id !== undefined && last.id !== id)) return false
+      undoStack.pop()
       commit(revertTo(state.data, last.data, ctx()), null)
+      return true
     },
     importData(incoming, mode) {
       commit(mode === 'merge' ? mergeData(state.data, incoming) : incoming, mode === 'merge' ? 'Imported backup' : 'Replaced data from backup')

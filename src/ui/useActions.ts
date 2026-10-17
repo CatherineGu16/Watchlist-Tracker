@@ -43,9 +43,19 @@ export function useActions(openDetail?: (titleId: string, opts?: OpenDetailOptio
   const toast = useToast()
 
   return useMemo(() => {
-    const undo = { label: 'Undo', onClick: () => store.undo() }
+    /**
+     * Undo for one specific edit. Refused if anything changed after it (another edit, or another
+     * device's changes merging in), so it can never revert something the confirmation isn't about.
+     */
+    const undoOf = (id: number) => ({
+      label: 'Undo',
+      onClick: () => {
+        if (!store.undo(id)) toast('Can’t undo that now: something else changed since.')
+      },
+    })
     const run = (label: string, edit: Edit) => {
-      if (store.apply(edit, label)) toast(label, [undo])
+      const id = store.apply(edit, label)
+      if (id !== null) toast(label, [undoOf(id)])
     }
 
     return {
@@ -55,8 +65,9 @@ export function useActions(openDetail?: (titleId: string, opts?: OpenDetailOptio
         if (finished.length === 0) {
           const today = todayIso()
           const label = `Checked off ${v.title.title}`
-          if (!store.apply((d, c) => checkOff(d, c, v.title.id, today), label)) return
-          toast(label, [...(openDetail ? [{ label: 'Change date', onClick: () => openDetail(v.title.id, { editLatest: true }) }] : []), undo])
+          const id = store.apply((d, c) => checkOff(d, c, v.title.id, today), label)
+          if (id === null) return
+          toast(label, [...(openDetail ? [{ label: 'Change date', onClick: () => openDetail(v.title.id, { editLatest: true }) }] : []), undoOf(id)])
         } else if (finished.length === 1 && v.watches.length === 1) {
           run(`Unchecked ${v.title.title}`, (d, c) => deleteWatch(d, c, finished[0].id))
         } else {
@@ -72,8 +83,9 @@ export function useActions(openDetail?: (titleId: string, opts?: OpenDetailOptio
         if (mine.length === 0) {
           const today = todayIso()
           const label = `Checked off ${name}`
-          if (!store.apply((d, c) => checkOff(d, c, v.title.id, today, s.id), label)) return
-          toast(label, [...(openDetail ? [{ label: 'Open', onClick: () => openDetail(v.title.id) }] : []), undo])
+          const id = store.apply((d, c) => checkOff(d, c, v.title.id, today, s.id), label)
+          if (id === null) return
+          toast(label, [...(openDetail ? [{ label: 'Open', onClick: () => openDetail(v.title.id) }] : []), undoOf(id)])
         } else if (finished.length === 1 && mine.length === 1) {
           run(`Unchecked ${name}`, (d, c) => deleteWatch(d, c, finished[0].id))
         } else {
@@ -112,8 +124,9 @@ export function useActions(openDetail?: (titleId: string, opts?: OpenDetailOptio
       addTitle(input: TitleInput, seasons: SeasonInput[]): string | null {
         const id = newCustomTitleId(input.title, () => crypto.randomUUID())
         const label = `Added ${input.title.trim()}`
-        if (!store.apply((d, c) => addCustomTitle(d, c, id, input, seasons), label)) return null
-        toast(label, [...(openDetail ? [{ label: 'Open', onClick: () => openDetail(id) }] : []), undo])
+        const undoId = store.apply((d, c) => addCustomTitle(d, c, id, input, seasons), label)
+        if (undoId === null) return null
+        toast(label, [...(openDetail ? [{ label: 'Open', onClick: () => openDetail(id) }] : []), undoOf(undoId)])
         return id
       },
       updateTitle(id: string, input: TitleInput) {

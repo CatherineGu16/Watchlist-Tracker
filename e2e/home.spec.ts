@@ -39,6 +39,26 @@ test('a season you start shows up under Continue watching, with +1 and Finish', 
   await expect(recent(page).getByRole('button', { name: /WandaVision/ })).toContainText('Oct 16, 2026')
 })
 
+test('a confirmation’s Undo never reverts a later, unrelated change', async ({ page }) => {
+  await nav(page).getByRole('link', { name: 'Browse' }).click()
+  await page.getByRole('radio', { name: 'TV' }).click()
+  await page.getByRole('button', { name: /^Echo: 0 of 1 seasons/ }).click()
+  await sheet(page).getByRole('button', { name: 'Start watching' }).click()
+  await page.keyboard.press('Escape')
+  await page.getByRole('radio', { name: 'Movies' }).click()
+  await box(page, 'Iron Man').click()
+  const undo = page.getByRole('status').getByRole('button', { name: 'Undo' })
+  await expect(undo).toBeVisible()
+
+  // An episode tap saves quietly while the Iron Man confirmation is still up.
+  await nav(page).getByRole('link', { name: 'Home' }).click()
+  await watching(page).getByRole('button', { name: 'One more episode of Echo Season 1' }).click()
+  await undo.click()
+  await expect(page.getByRole('status')).toContainText('Can’t undo that now')
+  await expect(watching(page).getByRole('listitem').filter({ hasText: 'Echo' })).toContainText('1 / 5')
+  await expect(recent(page).getByRole('button', { name: /Iron Man/ })).toBeVisible()
+})
+
 test('recently watched cards open the title, and Back closes it', async ({ page }) => {
   await nav(page).getByRole('link', { name: 'Browse' }).click()
   await box(page, 'Iron Man').click()

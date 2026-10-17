@@ -54,8 +54,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 key={a.label}
                 className="min-h-10 shrink-0 rounded-lg px-3 font-bold text-[#f2c14e] hover:bg-white/10"
                 onClick={() => {
-                  a.onClick()
+                  // Close first, so an action that shows its own message (e.g. "Can't undo") isn't wiped.
                   setToast(null)
+                  a.onClick()
                 }}
               >
                 {a.label}

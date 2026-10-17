@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { PrivateData } from '../lib/types.ts'
-import { checkOff, deleteWatch, updateWatch } from '../lib/watchActions.ts'
+import { checkOff, deleteWatch, setGroupPlacement, updateWatch } from '../lib/watchActions.ts'
 import { memoryBackend } from '../store/storage.ts'
 import { createWatchlistStore } from '../store/watchlistStore.ts'
 import { SyncError, type RemoteApi, type SyncTarget } from './github.ts'
@@ -141,6 +141,19 @@ describe('sync engine', () => {
     const remote = gh.file!.data.watches
     expect(remote.find((w) => w.id === a.id)?.endDate).toBe('2020')
     expect(remote.find((w) => w.id === b.id)?.deleted).toBe(true)
+  })
+
+  it('syncs a group moved between tabs, even with no other changes', async () => {
+    const gh = fakeGitHub()
+    const phone = await device(gh, 'phone')
+    const pc = await device(gh, 'pc')
+    await phone.engine.connect(CONFIG)
+    await pc.engine.connect(CONFIG)
+    phone.store.apply((d, c) => setGroupPlacement(d, c, 'fox-xmen', 'mcu'), 'x')
+    await phone.engine.syncNow()
+    expect(gh.file!.data.groupPlacement?.values).toEqual({ 'fox-xmen': 'mcu' })
+    await pc.engine.syncNow()
+    expect(pc.store.getState().data.groupPlacement?.values).toEqual({ 'fox-xmen': 'mcu' })
   })
 
   it('does nothing when there is nothing new', async () => {

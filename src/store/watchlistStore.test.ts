@@ -49,6 +49,28 @@ describe('watchlist store', () => {
     expect(store.getState().undoLabel).toBe('Checked off A')
   })
 
+  it('undo reports when there is nothing left, e.g. after another device’s changes merged in', async () => {
+    const store = createWatchlistStore(memoryBackend(), clock, newId)
+    await store.init()
+    store.apply(tick('a'), 'Checked off A')
+    store.applySynced({ ...store.getState().data, watches: [...store.getState().data.watches] })
+    expect(store.undo()).toBe(false)
+    expect(store.getState().data.watches.filter((w) => !w.deleted)).toHaveLength(1)
+  })
+
+  it('an Undo tied to one edit refuses once something else changed after it', async () => {
+    const store = createWatchlistStore(memoryBackend(), clock, newId)
+    await store.init()
+    const checkedOff = store.apply(tick('movie'), 'Checked off movie')!
+    store.apply(tick('season'), 'Changed episode count') // e.g. a quiet episode tap
+    expect(store.undo(checkedOff)).toBe(false)
+    expect(store.getState().data.watches.filter((w) => !w.deleted).map((w) => w.titleId)).toEqual(['movie', 'season'])
+
+    const latest = store.apply(tick('third'), 'Checked off third')!
+    expect(store.undo(latest)).toBe(true)
+    expect(store.getState().data.watches.filter((w) => !w.deleted).map((w) => w.titleId)).toEqual(['movie', 'season'])
+  })
+
   it('reports save failures without losing the change on screen', async () => {
     const failing: StorageBackend = { kind: 'indexeddb', load: async () => null, save: async () => Promise.reject(new Error('quota')) }
     const store = createWatchlistStore(failing, clock, newId)

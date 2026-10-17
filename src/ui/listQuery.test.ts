@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildTitleViews } from '../lib/catalogView.ts'
 import type { Catalog, Title } from '../lib/types.ts'
 import { checkOff, emptyData } from '../lib/watchActions.ts'
-import { DEFAULT_QUERY, filterEntries, groupEntries, normalize, sortableTitle, sortEntries, toEntries, type ListEntry, type ListQuery } from './listQuery.ts'
+import { DEFAULT_QUERY, filterEntries, reviveQuery, groupEntries, normalize, sortableTitle, sortEntries, toEntries, type ListEntry, type ListQuery } from './listQuery.ts'
 
 const t = (id: string, over: Partial<Title>): Title => ({
   id,
@@ -131,5 +131,24 @@ describe('release order, by season', () => {
 
   it('other sorts keep one row per show', () => {
     expect(toEntries(v, false, '2026-10-16').map((e) => e.key).sort()).toEqual(['aou', 'dd', 'jj'])
+  })
+})
+
+describe('reviveQuery', () => {
+  it('restores valid saved settings but never the search', () => {
+    expect(reviveQuery({ ...DEFAULT_QUERY, universe: 'other', sort: 'release-seasons', phase: 4, sagas: ['X-Men'], search: 'loki' })).toEqual({
+      ...DEFAULT_QUERY,
+      universe: 'other',
+      sort: 'release-seasons',
+      phase: 4,
+      sagas: ['X-Men'],
+      search: '',
+    })
+  })
+  it('replaces anything damaged or unknown with defaults instead of failing', () => {
+    expect(reviveQuery({ sort: 'bogus', universe: 'nope', type: 'x', sagas: 'notarray', status: 7, phase: '4' })).toEqual(DEFAULT_QUERY)
+    expect(reviveQuery(null)).toEqual(DEFAULT_QUERY)
+    expect(reviveQuery('junk')).toEqual(DEFAULT_QUERY)
+    expect(reviveQuery({ sagas: ['Infinity Saga', 3, null] }).sagas).toEqual(['Infinity Saga'])
   })
 })

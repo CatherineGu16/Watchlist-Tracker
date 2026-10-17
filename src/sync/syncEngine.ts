@@ -56,7 +56,7 @@ export function localStorageMeta(key = 'watchlist.sync.v1'): MetaStore {
   }
 }
 
-/** Content equality, ignoring order and the top-level timestamp. */
+/** Content equality, ignoring order and the top-level timestamp. Covers every synced field. */
 export function sameContent(a: PrivateData, b: PrivateData): boolean {
   const canon = (d: PrivateData) =>
     JSON.stringify({
@@ -64,6 +64,10 @@ export function sameContent(a: PrivateData, b: PrivateData): boolean {
       t: [...d.customTitles].sort((x, y) => x.id.localeCompare(y.id)),
       s: [...d.customSeasons].sort((x, y) => x.id.localeCompare(y.id)),
       o: Object.fromEntries(Object.entries(d.titleOverrides).sort(([x], [y]) => x.localeCompare(y))),
+      // Its updatedAt is compared too: it decides which device's choice wins the next merge.
+      g: d.groupPlacement
+        ? { u: d.groupPlacement.updatedAt, v: Object.fromEntries(Object.entries(d.groupPlacement.values).sort(([x], [y]) => x.localeCompare(y))) }
+        : null,
     })
   return canon(a) === canon(b)
 }

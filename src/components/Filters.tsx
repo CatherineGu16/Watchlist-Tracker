@@ -68,8 +68,11 @@ export function FilterDrawer({
   value,
   onApply,
   countFor,
+  noun = 'title',
   ...options
 }: Options & {
+  /** What the count is of: "season" rows count too in Release by season. */
+  noun?: string
   open: boolean
   onOpenChange: (o: boolean) => void
   value: FilterValues
@@ -106,7 +109,7 @@ export function FilterDrawer({
             }}
             className="ml-auto min-h-11 flex-1 rounded-lg bg-primary px-4 font-bold text-on-primary sm:flex-none"
           >
-            {count === 0 ? 'No matches' : `Show ${plural(count, 'title')}`}
+            {count === 0 ? 'No matches' : `Show ${plural(count, noun)}`}
           </button>
         </div>
       }

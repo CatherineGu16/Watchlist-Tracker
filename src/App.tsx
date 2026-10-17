@@ -19,6 +19,7 @@ import {
   filterEntries,
   groupEntries,
   phasesIn,
+  reviveQuery,
   sagasIn,
   sortEntries,
   toEntries,
@@ -49,8 +50,6 @@ export default function App() {
   )
 }
 
-/** Remembered per device, except the search text. */
-const reviveQuery = (s: unknown): ListQuery => ({ ...DEFAULT_QUERY, ...(s as Partial<ListQuery>), search: '' })
 
 function Shell({ store }: { store: WatchlistStore }) {
   const state = useWatchlistState(store)
@@ -171,6 +170,7 @@ function Shell({ store }: { store: WatchlistStore }) {
             value={filterValues}
             onApply={update}
             countFor={countFor}
+        noun={deferred.sort === 'release-seasons' ? 'result' : 'title'}
             sagas={sagas}
             phases={phases}
           />
