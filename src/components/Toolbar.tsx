@@ -10,6 +10,7 @@ const TYPES: { id: TypeFilter; label: string }[] = [
 
 const SORTS: { id: SortKey; label: string; mcuOnly?: boolean }[] = [
   { id: 'release', label: 'Release order' },
+  { id: 'release-seasons', label: 'Release by season' },
   { id: 'story', label: 'Story order', mcuOnly: true },
   { id: 'saga', label: 'Saga' },
   { id: 'title', label: 'Title' },
@@ -53,7 +54,7 @@ export function Toolbar({
           <select
             value={query.sort}
             onChange={(e) => onChange({ sort: e.target.value as SortKey })}
-            className="h-11 max-w-[44vw] appearance-none rounded-lg border border-line bg-surface pr-8 pl-3 text-base"
+            className="h-11 max-w-[48vw] appearance-none rounded-lg border border-line bg-surface pr-7 pl-3 text-base"
           >
             {sorts.map((s) => (
               <option key={s.id} value={s.id}>
@@ -61,7 +62,7 @@ export function Toolbar({
               </option>
             ))}
           </select>
-          <svg viewBox="0 0 12 12" className="pointer-events-none absolute top-1/2 right-3 size-3 -translate-y-1/2 text-muted" aria-hidden="true">
+          <svg viewBox="0 0 12 12" className="pointer-events-none absolute top-1/2 right-2.5 size-3 -translate-y-1/2 text-muted" aria-hidden="true">
             <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.6" />
           </svg>
         </label>

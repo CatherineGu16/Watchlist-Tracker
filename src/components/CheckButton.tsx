@@ -1,4 +1,5 @@
 import type { TitleView } from '../lib/catalogView.ts'
+import type { ItemStatus } from '../lib/status.ts'
 import { sagaColor } from '../ui/sagas.ts'
 
 /**
@@ -34,21 +35,24 @@ export function CheckButton({ view, onToggle, onOpen }: { view: TitleView; onTog
     )
   }
 
-  const upcoming = summary.status === 'upcoming'
+  return <Stamp label={`${title.title} watched`} status={summary.status} color={color} onToggle={onToggle} />
+}
+
+/**
+ * The check-off stamp for a movie, a special, or one season. Dashed before release; a dot while
+ * you're partway through a season.
+ */
+export function Stamp({ label, status, color, onToggle }: { label: string; status: ItemStatus; color: string; onToggle: () => void }) {
+  const watched = status === 'watched'
   return (
-    <button
-      onClick={onToggle}
-      role="checkbox"
-      aria-checked={watched}
-      aria-label={`${title.title} watched`}
-      className="grid size-11 shrink-0 place-items-center rounded-full"
-    >
+    <button onClick={onToggle} role="checkbox" aria-checked={watched} aria-label={label} className="grid size-11 shrink-0 place-items-center rounded-full">
       <span
         key={String(watched)}
-        className={`grid size-8 place-items-center rounded-full border-2 transition-colors ${upcoming && !watched ? 'border-dashed' : ''} ${watched ? '[animation:stamp_220ms_ease-out]' : ''}`}
+        className={`grid size-8 place-items-center rounded-full border-2 transition-colors ${status === 'upcoming' ? 'border-dashed' : ''} ${watched ? '[animation:stamp_220ms_ease-out]' : ''}`}
         style={{ borderColor: color, background: watched ? color : 'transparent', color: 'var(--bg)' }}
       >
         {watched && <Tick />}
+        {status === 'in-progress' && <span className="size-2.5 rounded-full" style={{ background: color }} aria-hidden="true" />}
       </span>
     </button>
   )

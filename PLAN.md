@@ -22,7 +22,7 @@ watch history.
 | Frontend | React + TypeScript + Vite, Tailwind CSS, Radix UI primitives, `vite-plugin-pwa` |
 | Deploy | GitHub Actions workflow builds and publishes to Pages on push to `main` (Actions is free for public repos) |
 | Release check (TMDB) | **On hold.** The button is hidden until a key is added later |
-| Canon split | **MCU Canon**: Marvel Studios films + Disney+ series/specials + Netflix *Daredevil* + *Deadpool & Wolverine*. **Other Marvel**: the other Marvel Television shows (ABC/Netflix/Hulu/Freeform), Fox X-Men, Sony Spider-Man, other pre-MCU films |
+| Canon split | **MCU**: Marvel Studios films + Disney+ series/specials + all six Netflix shows (on Disney+'s official MCU timeline since 2024) + *Deadpool & Wolverine*. **Other Marvel**: ABC/Hulu/Freeform Marvel Television, Fox X-Men, Sony Spider-Man, other pre-MCU films. Each group can be moved in Settings |
 | Episode progress | Optional counter on in-progress season watches (e.g. 5/13). No per-episode dates |
 
 ### Free-account checks

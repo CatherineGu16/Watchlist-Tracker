@@ -1,5 +1,4 @@
-import type { TitleView } from '../lib/catalogView.ts'
-import type { ListGroup } from '../ui/listQuery.ts'
+import type { ListEntry, ListGroup } from '../ui/listQuery.ts'
 import { sagaColor } from '../ui/sagas.ts'
 import { TitleRow } from './TitleRow.tsx'
 
@@ -13,7 +12,7 @@ export function TitleList({
 }: {
   showYear: boolean
   groups: ListGroup[]
-  onToggle: (v: TitleView) => void
+  onToggle: (e: ListEntry) => void
   onOpen: (id: string) => void
   onClearFilters: () => void
   filtered: boolean
@@ -50,8 +49,8 @@ export function TitleList({
             )}
           </header>
           <ul className="border-t border-line">
-            {g.items.map((v) => (
-              <TitleRow key={v.title.id} view={v} onToggle={onToggle} onOpen={onOpen} showYear={showYear} />
+            {g.items.map((e) => (
+              <TitleRow key={e.key} entry={e} onToggle={onToggle} onOpen={onOpen} showYear={showYear} />
             ))}
           </ul>
         </section>

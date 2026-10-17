@@ -16,15 +16,18 @@ import type { WatchlistStore } from './store/watchlistStore.ts'
 import {
   DEFAULT_QUERY,
   activeFilterCount,
-  filterViews,
-  groupViews,
+  filterEntries,
+  groupEntries,
   phasesIn,
   sagasIn,
-  sortViews,
+  sortEntries,
+  toEntries,
+  type ListEntry,
   type FilterValues,
   type ListQuery,
 } from './ui/listQuery.ts'
 import { useActions, type OpenDetailOptions } from './ui/useActions.ts'
+import { todayIso } from './lib/partialDate.ts'
 import { usePersistentState } from './ui/usePersistentState.ts'
 import { useRoute } from './ui/route.ts'
 
@@ -74,8 +77,11 @@ function Shell({ store }: { store: WatchlistStore }) {
   }, [route.page])
 
   const deferred = useDeferredValue(query)
-  const filtered = useMemo(() => filterViews(views, deferred), [views, deferred])
-  const groups = useMemo(() => groupViews(sortViews(filtered, deferred.sort), deferred.sort), [filtered, deferred.sort])
+  const today = todayIso()
+  // "Release by season" turns each show into one row per season.
+  const entries = useMemo(() => toEntries(views, deferred.sort === 'release-seasons', today), [views, deferred.sort, today])
+  const filtered = useMemo(() => filterEntries(entries, deferred), [entries, deferred])
+  const groups = useMemo(() => groupEntries(sortEntries(filtered, deferred.sort), deferred.sort), [filtered, deferred.sort])
   const sagas = useMemo(() => sagasIn(views, query.universe), [views, query.universe])
   const phases = useMemo(() => phasesIn(views, query.universe), [views, query.universe])
 
@@ -92,7 +98,11 @@ function Shell({ store }: { store: WatchlistStore }) {
     })
 
   const filterValues: FilterValues = { sagas: query.sagas, phase: query.phase, status: query.status }
-  const countFor = (f: FilterValues) => filterViews(views, { ...query, ...f }).length
+  const countFor = (f: FilterValues) => filterEntries(entries, { ...query, ...f }).length
+  const toggleEntry = useCallback(
+    (e: ListEntry) => (e.season ? actions.toggleSeason(e.view, e.season) : actions.toggleMovie(e.view)),
+    [actions],
+  )
 
   const openView = route.titleId ? (views.find((v) => v.title.id === route.titleId) ?? null) : null
   const openSettings = () => setSettingsOpen(true)
@@ -147,8 +157,8 @@ function Shell({ store }: { store: WatchlistStore }) {
               </Toolbar>
               <TitleList
                 groups={groups}
-                showYear={deferred.sort !== 'release'}
-                onToggle={actions.toggleMovie}
+                showYear={deferred.sort !== 'release' && deferred.sort !== 'release-seasons'}
+                onToggle={toggleEntry}
                 onOpen={openDetail}
                 filtered={activeFilterCount(query) > 0 || query.search !== ''}
                 onClearFilters={() => update({ type: 'all', sagas: [], phase: null, status: 'all', search: '' })}
@@ -186,7 +196,7 @@ function Shell({ store }: { store: WatchlistStore }) {
           openDetail(id)
         }}
       />
-      <Settings open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <Settings open={settingsOpen} onOpenChange={setSettingsOpen} actions={actions} />
     </div>
   )
 }

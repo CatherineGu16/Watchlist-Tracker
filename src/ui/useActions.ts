@@ -2,13 +2,15 @@ import { useMemo } from 'react'
 import type { TitleView } from '../lib/catalogView.ts'
 import { todayIso } from '../lib/partialDate.ts'
 import { isFinished } from '../lib/status.ts'
-import type { Season } from '../lib/types.ts'
+import type { Collection, Season, Universe } from '../lib/types.ts'
 import {
   checkOff,
   deleteWatch,
   finishWatch,
   logWatch,
+  resetGroupPlacement,
   setEpisodes,
+  setGroupPlacement,
   startSeason,
   updateWatch,
   type NewWatch,
@@ -62,6 +64,23 @@ export function useActions(openDetail?: (titleId: string, opts?: OpenDetailOptio
           openDetail?.(v.title.id)
         }
       },
+      /** Checkbox on a season row: same rules as a movie, scoped to that season. */
+      toggleSeason(v: TitleView, s: Season) {
+        const mine = v.watches.filter((w) => w.seasonId === s.id)
+        const finished = mine.filter(isFinished)
+        const name = `${v.title.title} ${s.label}`
+        if (mine.length === 0) {
+          const today = todayIso()
+          const label = `Checked off ${name}`
+          if (!store.apply((d, c) => checkOff(d, c, v.title.id, today, s.id), label)) return
+          toast(label, [...(openDetail ? [{ label: 'Open', onClick: () => openDetail(v.title.id) }] : []), undo])
+        } else if (finished.length === 1 && mine.length === 1) {
+          run(`Unchecked ${name}`, (d, c) => deleteWatch(d, c, finished[0].id))
+        } else {
+          // Rewatches or a season in progress: handle it in the show's panel.
+          openDetail?.(v.title.id)
+        }
+      },
       logWatch(v: TitleView, w: Omit<NewWatch, 'titleId'>, label = `Logged a watch of ${v.title.title}`) {
         run(label, (d, c) => logWatch(d, c, { ...w, titleId: v.title.id }))
       },
@@ -112,6 +131,14 @@ export function useActions(openDetail?: (titleId: string, opts?: OpenDetailOptio
       },
       deleteSeason(v: TitleView, s: Season) {
         run(`Deleted ${v.title.title} ${s.label}`, (d, c) => deleteCustomSeason(d, c, s.id))
+      },
+      /** Moves a whole group between tabs; null puts it back where it's recommended. */
+      setGroupPlacement(group: Collection, label: string, universe: Universe | null, recommended: Universe) {
+        const to = universe ?? recommended
+        run(`${label} now in ${to === 'mcu' ? 'MCU' : 'Other Marvel'}`, (d, c) => setGroupPlacement(d, c, group, universe))
+      },
+      resetGroupPlacement() {
+        run('Back to the recommended placement', (d, c) => resetGroupPlacement(d, c))
       },
       /** Episode stepper: saved quietly, no toast for every tap. */
       setEpisodes(watchId: string, episodes: number, episodeCount: number | null) {

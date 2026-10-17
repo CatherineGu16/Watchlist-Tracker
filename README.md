@@ -5,8 +5,12 @@ half-remembered ones), log rewatches, and follow series season by season. It ins
 iPad and Windows like an app, works offline, and syncs between devices through a private GitHub
 repo.
 
-- **MCU** and **Other Marvel** tabs (Fox X-Men, Sony Spider-Man, Marvel Television, classic films)
-- Filter by type, saga, phase and status; sort by release, story order, saga, title or last watched
+- **MCU** and **Other Marvel** tabs. MCU includes the Netflix shows, which Disney+ lists in its
+  official MCU timeline. Fox X-Men, Sony Spider-Man, Marvel Television and other Marvel titles start
+  in Other Marvel; **Settings → What counts as MCU** moves any of those groups across
+- Filter by type, saga, phase and status; sort by release, **release by season** (each season of a
+  show on its own row, so Daredevil and Jessica Jones seasons interleave as they aired), story
+  order, saga, title or last watched
 - One tap to check off a movie, with Undo and Change date
 - Seasons: start, count episodes, finish; rewatches keep their own start and end dates
 - Dates can be exact, a month, a year, approximate, or unknown

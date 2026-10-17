@@ -1,4 +1,4 @@
-import type { PartialDate, PrivateData, Watch } from './types.ts'
+import type { Collection, PartialDate, PrivateData, Universe, Watch } from './types.ts'
 
 /** Pure edits to PrivateData. Every changed record gets a fresh updatedAt so sync merges pick it. */
 
@@ -87,6 +87,10 @@ export function revertTo(current: PrivateData, snapshot: PrivateData, ctx: EditC
     watches: revertRecords(current.watches, snapshot.watches, ctx.now),
     customTitles: revertRecords(current.customTitles, snapshot.customTitles, ctx.now),
     customSeasons: revertRecords(current.customSeasons, snapshot.customSeasons, ctx.now),
+    // A restored placement is a new choice, so it must beat whatever other devices synced meanwhile.
+    ...(JSON.stringify(current.groupPlacement?.values ?? {}) === JSON.stringify(snapshot.groupPlacement?.values ?? {})
+      ? { groupPlacement: current.groupPlacement }
+      : { groupPlacement: { values: snapshot.groupPlacement?.values ?? {}, updatedAt: ctx.now } }),
   }
 }
 
@@ -97,4 +101,17 @@ function revertRecords<T extends { id: string; updatedAt?: string; deleted?: boo
     if (!old) return x.deleted ? x : { ...x, deleted: true, updatedAt: now }
     return JSON.stringify(old) === JSON.stringify(x) ? x : { ...old, updatedAt: now }
   })
+}
+
+/** Puts every group back where the catalog recommends. */
+export function resetGroupPlacement(data: PrivateData, ctx: EditContext): PrivateData {
+  return { ...data, updatedAt: ctx.now, groupPlacement: { values: {}, updatedAt: ctx.now } }
+}
+
+/** Moves a whole group (e.g. the Fox X-Men films) between the MCU and Other Marvel tabs. */
+export function setGroupPlacement(data: PrivateData, ctx: EditContext, group: Collection, universe: Universe | null): PrivateData {
+  const values = { ...data.groupPlacement?.values }
+  if (universe === null) delete values[group]
+  else values[group] = universe
+  return { ...data, updatedAt: ctx.now, groupPlacement: { values, updatedAt: ctx.now } }
 }

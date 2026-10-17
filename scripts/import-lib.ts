@@ -1,10 +1,12 @@
 import { csvRecords } from '../src/lib/csv.ts'
 import { comparePartialDates, parseUsDate, parseWatchCell, type WatchSpan } from '../src/lib/partialDate.ts'
-import type { Catalog, PartialDate, PrivateData, Season, Title, TitleType, Watch } from '../src/lib/types.ts'
+import type { Catalog, Collection, PartialDate, PrivateData, Season, Title, TitleType, Watch } from '../src/lib/types.ts'
 import {
   EXTRA_SEASONS,
   EXTRA_TITLES,
+  COLLECTION_BY_SAGA,
   LEGACY_MARVEL_TV,
+  NETFLIX_DEFENDERS,
   MCU_CHRONO_ORDER,
   MCU_PHASE,
   SAGA_NAMES,
@@ -79,8 +81,12 @@ export function buildFromSheet(mainCsv: string, seriesCsv: string, now: Date, { 
     const saga = SAGA_NAMES[row['Phase']]
     if (!saga) throw new Error(`Unknown saga "${row['Phase']}" for ${name}`)
     const releaseDate = parseUsDate(row['Release Date'])
-    const isMarvelStudiosSaga = saga === 'Infinity Saga' || saga === 'Multiverse Saga'
-    const universe = isMarvelStudiosSaga && !LEGACY_MARVEL_TV.has(name) ? 'mcu' : 'other'
+    const collection: Collection = NETFLIX_DEFENDERS.has(name)
+      ? 'netflix'
+      : LEGACY_MARVEL_TV.has(name)
+        ? 'marvel-tv'
+        : (COLLECTION_BY_SAGA[saga] ?? 'marvel-studios')
+    const universe = collection === 'marvel-studios' || collection === 'netflix' ? 'mcu' : 'other'
 
     const title: Title = {
       id: titleId(name, releaseDate),
@@ -88,10 +94,11 @@ export function buildFromSheet(mainCsv: string, seriesCsv: string, now: Date, { 
       type,
       releaseDate,
       universe,
+      collection,
       saga,
       phase: universe === 'mcu' ? (MCU_PHASE[name] ?? null) : null,
       chronoIndex: null,
-      studio: STUDIO_BY_SAGA[saga] ?? (LEGACY_MARVEL_TV.has(name) || name === 'Daredevil' ? 'Marvel Television' : 'Marvel Studios'),
+      studio: STUDIO_BY_SAGA[saga] ?? (collection === 'marvel-studios' ? 'Marvel Studios' : 'Marvel Television'),
       tmdbId: null,
       posterPath: null,
     }
@@ -165,6 +172,7 @@ export function buildFromSheet(mainCsv: string, seriesCsv: string, now: Date, { 
       type: extra.type,
       releaseDate: extra.releaseDate,
       universe: extra.universe,
+      collection: extra.collection,
       saga: extra.saga,
       phase: extra.phase ?? null,
       chronoIndex: null,
@@ -220,7 +228,7 @@ function validate(titles: Title[], seasons: Season[], mainRows: Record<string, s
     ids.add(t.id)
   }
   for (const t of titles) {
-    if (t.universe === 'mcu' && t.phase === null && t.title !== 'Daredevil') warnings.push(`${t.title}: MCU title without a phase`)
+    if (t.universe === 'mcu' && t.phase === null && t.collection !== 'netflix') warnings.push(`${t.title}: MCU title without a phase`)
     if (t.universe === 'mcu' && t.chronoIndex === null) warnings.push(`${t.title}: MCU title missing from story order`)
     if (t.type === 'series' && !seasons.some((s) => s.titleId === t.id)) throw new Error(`${t.title}: series with no seasons`)
   }

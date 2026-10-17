@@ -16,7 +16,14 @@ export function mergeData(a: PrivateData, b: PrivateData): PrivateData {
     customTitles: newestById<Title>(a.customTitles, b.customTitles),
     customSeasons: newestById<Season>(a.customSeasons, b.customSeasons),
     titleOverrides: overrides,
+    ...newerPlacement(a, b),
   }
+}
+
+function newerPlacement(a: PrivateData, b: PrivateData): Pick<PrivateData, 'groupPlacement'> {
+  const [x, y] = [a.groupPlacement, b.groupPlacement]
+  const pick = !x ? y : !y ? x : y.updatedAt > x.updatedAt ? y : x
+  return pick ? { groupPlacement: pick } : {}
 }
 
 type Synced = { id: string; updatedAt?: string; deleted?: boolean }
@@ -70,6 +77,9 @@ export function parsePrivateData(input: unknown): PrivateData {
       (s) => isObject(s) && typeof s.id === 'string' && typeof s.titleId === 'string' && typeof s.number === 'number',
     ),
     titleOverrides: isObject(o.titleOverrides) ? (o.titleOverrides as PrivateData['titleOverrides']) : {},
+    ...(isObject(o.groupPlacement) && isObject((o.groupPlacement as { values?: unknown }).values)
+      ? { groupPlacement: o.groupPlacement as NonNullable<PrivateData['groupPlacement']> }
+      : {}),
   }
 }
 

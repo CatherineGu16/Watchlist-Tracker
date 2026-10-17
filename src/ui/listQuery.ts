@@ -1,10 +1,11 @@
 import type { TitleView } from '../lib/catalogView.ts'
 import { comparePartialDates } from '../lib/partialDate.ts'
-import type { ItemStatus } from '../lib/status.ts'
-import type { TitleType, Universe } from '../lib/types.ts'
+import { compareWatches, isFinished, seasonStatus, type ItemStatus } from '../lib/status.ts'
+import type { PartialDate, Season, TitleType, Universe } from '../lib/types.ts'
 import { sagaRank } from './sagas.ts'
 
-export type SortKey = 'release' | 'story' | 'title' | 'last-watched' | 'saga'
+/** "release-seasons" lists each season of a show on its own, by premiere date. */
+export type SortKey = 'release' | 'release-seasons' | 'story' | 'title' | 'last-watched' | 'saga'
 export type TypeFilter = 'all' | TitleType
 
 export interface ListQuery {
@@ -31,13 +32,49 @@ export const DEFAULT_QUERY: ListQuery = {
   sort: 'release',
 }
 
+/**
+ * One row of the list: a whole title, or (in "Release by season") one season of a show,
+ * carrying that season's own date, status and watches.
+ */
+export interface ListEntry {
+  key: string
+  view: TitleView
+  season: Season | null
+  releaseDate: PartialDate | null
+  status: ItemStatus
+  lastWatched: PartialDate | null
+  watchCount: number
+}
+
 export interface ListGroup {
   key: string
   label: string
   /** Saga groups get a color and progress. */
   saga?: string
-  items: TitleView[]
+  items: ListEntry[]
   watched: number
+}
+
+export function toEntries(views: TitleView[], bySeason: boolean, today: PartialDate): ListEntry[] {
+  return views.flatMap((view): ListEntry[] => {
+    if (!bySeason || view.title.type !== 'series' || view.seasons.length === 0) {
+      const { status, lastWatched, watchCount } = view.summary
+      return [{ key: view.title.id, view, season: null, releaseDate: view.title.releaseDate, status, lastWatched, watchCount }]
+    }
+    return view.seasons.map((season) => {
+      const mine = view.watches.filter((w) => w.seasonId === season.id).sort(compareWatches)
+      const dated = mine.map((w) => w.endDate ?? w.startDate).filter((d): d is PartialDate => d !== null).sort(comparePartialDates)
+      return {
+        key: season.id,
+        view,
+        season,
+        releaseDate: season.premiereDate,
+        status: seasonStatus(season, mine, today),
+        lastWatched: dated.at(-1) ?? null,
+        watchCount: mine.filter(isFinished).length,
+      }
+    })
+  })
 }
 
 /** Ignores case, accents and punctuation: "shield" finds "Agents of S.H.I.E.L.D.". */
@@ -49,31 +86,39 @@ export function normalize(text: string): string {
     .replace(/[^a-z0-9]+/g, '')
 }
 
-export function filterViews(views: TitleView[], q: ListQuery): TitleView[] {
+const matchesPhase = (e: ListEntry, phase: number) =>
+  e.season ? (e.season.phase ?? e.view.title.phase) === phase : e.view.title.phase === phase || e.view.seasons.some((s) => s.phase === phase)
+
+export function filterEntries(entries: ListEntry[], q: ListQuery): ListEntry[] {
   const needle = normalize(q.search)
-  return views.filter(
-    (v) =>
-      v.title.universe === q.universe &&
-      (q.type === 'all' || v.title.type === q.type) &&
-      (q.sagas.length === 0 || q.sagas.includes(v.title.saga)) &&
-      (q.phase === null || v.title.phase === q.phase || v.seasons.some((s) => s.phase === q.phase)) &&
-      (q.status === 'all' || v.summary.status === q.status) &&
-      (!needle || normalize(v.title.title).includes(needle)),
+  return entries.filter(
+    (e) =>
+      e.view.title.universe === q.universe &&
+      (q.type === 'all' || e.view.title.type === q.type) &&
+      (q.sagas.length === 0 || q.sagas.includes(e.view.title.saga)) &&
+      (q.phase === null || matchesPhase(e, q.phase)) &&
+      (q.status === 'all' || e.status === q.status) &&
+      (!needle || normalize(e.view.title.title).includes(needle)),
   )
 }
 
-const byRelease = (a: TitleView, b: TitleView) =>
-  comparePartialDates(a.title.releaseDate ?? '9999', b.title.releaseDate ?? '9999') || a.title.title.localeCompare(b.title.title)
+const seasonNo = (e: ListEntry) => e.season?.number ?? 0
 
-const COMPARE: Record<SortKey, (a: TitleView, b: TitleView) => number> = {
+const byRelease = (a: ListEntry, b: ListEntry) =>
+  comparePartialDates(a.releaseDate ?? '9999', b.releaseDate ?? '9999') ||
+  a.view.title.title.localeCompare(b.view.title.title) ||
+  seasonNo(a) - seasonNo(b)
+
+const COMPARE: Record<SortKey, (a: ListEntry, b: ListEntry) => number> = {
   release: byRelease,
-  saga: (a, b) => sagaRank(a.title.saga) - sagaRank(b.title.saga) || a.title.saga.localeCompare(b.title.saga) || byRelease(a, b),
-  story: (a, b) => (a.title.chronoIndex ?? Infinity) - (b.title.chronoIndex ?? Infinity) || byRelease(a, b),
-  title: (a, b) => sortableTitle(a.title.title).localeCompare(sortableTitle(b.title.title)),
+  'release-seasons': byRelease,
+  saga: (a, b) => sagaRank(a.view.title.saga) - sagaRank(b.view.title.saga) || a.view.title.saga.localeCompare(b.view.title.saga) || byRelease(a, b),
+  story: (a, b) => (a.view.title.chronoIndex ?? Infinity) - (b.view.title.chronoIndex ?? Infinity) || byRelease(a, b),
+  title: (a, b) => sortableTitle(a.view.title.title).localeCompare(sortableTitle(b.view.title.title)) || seasonNo(a) - seasonNo(b),
   // Most recent first; never-watched at the end in release order.
   'last-watched': (a, b) => {
-    const x = a.summary.lastWatched
-    const y = b.summary.lastWatched
+    const x = a.lastWatched
+    const y = b.lastWatched
     if (x && y) return comparePartialDates(y, x) || byRelease(a, b)
     if (x) return -1
     if (y) return 1
@@ -86,27 +131,30 @@ export function sortableTitle(title: string): string {
   return title.replace(/^(the|a|an)\s+/i, '')
 }
 
-export function sortViews(views: TitleView[], sort: SortKey): TitleView[] {
-  return [...views].sort(COMPARE[sort])
+export function sortEntries(entries: ListEntry[], sort: SortKey): ListEntry[] {
+  return [...entries].sort(COMPARE[sort])
+}
+
+const byYear = (e: ListEntry) => {
+  const y = e.releaseDate?.slice(0, 4) ?? 'TBA'
+  return { key: y, label: y }
 }
 
 /** Groups the sorted list into headed sections that carry meaning for each sort. */
-export function groupViews(sorted: TitleView[], sort: SortKey): ListGroup[] {
-  const keyOf: Record<SortKey, (v: TitleView) => { key: string; label: string; saga?: string }> = {
-    release: (v) => {
-      const y = v.title.releaseDate?.slice(0, 4) ?? 'TBA'
-      return { key: y, label: y }
-    },
-    saga: (v) => ({ key: v.title.saga, label: v.title.saga, saga: v.title.saga }),
+export function groupEntries(sorted: ListEntry[], sort: SortKey): ListGroup[] {
+  const keyOf: Record<SortKey, (e: ListEntry) => { key: string; label: string; saga?: string }> = {
+    release: byYear,
+    'release-seasons': byYear,
+    saga: ({ view: v }) => ({ key: v.title.saga, label: v.title.saga, saga: v.title.saga }),
     // Story order jumps between phases (Captain Marvel sits among Phase 1), so it's one run.
     story: () => ({ key: 'story', label: 'In story order' }),
-    title: (v) => {
+    title: ({ view: v }) => {
       const c = sortableTitle(v.title.title)[0]?.toUpperCase() ?? '#'
       const letter = /[A-Z]/.test(c) ? c : '#'
       return { key: letter, label: letter }
     },
-    'last-watched': (v) => {
-      const y = v.summary.lastWatched?.slice(0, 4)
+    'last-watched': (e) => {
+      const y = e.lastWatched?.slice(0, 4)
       return y ? { key: y, label: `Watched in ${y}` } : { key: 'never', label: 'Not watched yet' }
     },
   }
@@ -122,7 +170,7 @@ export function groupViews(sorted: TitleView[], sort: SortKey): ListGroup[] {
       groups.push(last)
     }
     last.items.push(v)
-    if (v.summary.status === 'watched') last.watched++
+    if (v.status === 'watched') last.watched++
   }
   return groups
 }

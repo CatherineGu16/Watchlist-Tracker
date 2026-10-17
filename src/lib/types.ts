@@ -4,12 +4,19 @@ export type PartialDate = string
 export type TitleType = 'movie' | 'series' | 'special'
 export type Universe = 'mcu' | 'other'
 
+/**
+ * Who made it, which decides whether it counts as MCU. Each group can be moved between the MCU and
+ * Other Marvel tabs in Settings; titles you add yourself have none and stay where you put them.
+ */
+export type Collection = 'marvel-studios' | 'netflix' | 'marvel-tv' | 'fox-xmen' | 'sony-spider-man' | 'classic'
+
 export interface Title {
   id: string
   title: string
   type: TitleType
   releaseDate: PartialDate | null
   universe: Universe
+  collection?: Collection
   saga: string
   phase: number | null
   /** In-universe (story) order. MCU only. */
@@ -75,4 +82,6 @@ export interface PrivateData {
   customTitles: Title[]
   customSeasons: Season[]
   titleOverrides: Record<string, Partial<Omit<Title, 'id'>>>
+  /** Groups you moved between the MCU and Other Marvel tabs (Settings). Synced; newest choice wins. */
+  groupPlacement?: { values: Partial<Record<Collection, Universe>>; updatedAt: string }
 }

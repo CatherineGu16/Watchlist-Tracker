@@ -1,33 +1,37 @@
 import { memo } from 'react'
 import type { TitleView } from '../lib/catalogView.ts'
 import { todayIso } from '../lib/partialDate.ts'
+import { isOpen } from '../lib/status.ts'
 import { formatCountdown, formatDate, plural } from '../ui/format.ts'
+import type { ListEntry } from '../ui/listQuery.ts'
 import { sagaColor } from '../ui/sagas.ts'
 import { seriesNote, shortSeason } from '../ui/seriesProgress.ts'
-import { CheckButton } from './CheckButton.tsx'
+import { CheckButton, Stamp } from './CheckButton.tsx'
 
 const TYPE_LABEL = { movie: 'Movie', series: 'Series', special: 'Special' } as const
 
 export const TitleRow = memo(function TitleRow({
-  view,
+  entry,
   onToggle,
   onOpen,
   showYear,
 }: {
-  view: TitleView
-  onToggle: (v: TitleView) => void
+  entry: ListEntry
+  onToggle: (e: ListEntry) => void
   onOpen: (id: string) => void
   showYear: boolean
 }) {
+  const { view } = entry
   const { title, summary } = view
   const today = todayIso()
+  if (entry.season) return <SeasonRow entry={entry} onToggle={onToggle} onOpen={onOpen} showYear={showYear} today={today} />
 
   return (
     <li
       className="relative flex items-center gap-1 border-b border-line pr-1 pl-2 sm:pl-3"
       style={{ boxShadow: `inset 4px 0 0 ${sagaColor(title.saga)}` }}
     >
-      <CheckButton view={view} onToggle={() => onToggle(view)} onOpen={() => onOpen(title.id)} />
+      <CheckButton view={view} onToggle={() => onToggle(entry)} onOpen={() => onOpen(title.id)} />
       <button
         onClick={() => onOpen(title.id)}
         className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-lg py-2 pr-2 pl-1 text-left hover:bg-surface"
@@ -52,6 +56,63 @@ export const TitleRow = memo(function TitleRow({
     </li>
   )
 })
+
+/** One season as its own row, for "Release by season". */
+function SeasonRow({
+  entry,
+  onToggle,
+  onOpen,
+  showYear,
+  today,
+}: {
+  entry: ListEntry
+  onToggle: (e: ListEntry) => void
+  onOpen: (id: string) => void
+  showYear: boolean
+  today: string
+}) {
+  const { view, status } = entry
+  const season = entry.season!
+  const { title } = view
+  const open = view.watches.find((w) => w.seasonId === season.id && isOpen(w))
+  const phase = season.phase ?? title.phase
+
+  return (
+    <li className="relative flex items-center gap-1 border-b border-line pr-1 pl-2 sm:pl-3" style={{ boxShadow: `inset 4px 0 0 ${sagaColor(title.saga)}` }}>
+      <Stamp label={`${title.title} ${season.label} watched`} status={status} color={sagaColor(title.saga)} onToggle={() => onToggle(entry)} />
+      <button
+        onClick={() => onOpen(title.id)}
+        aria-label={`${title.title} ${season.label}`}
+        className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-lg py-2 pr-2 pl-1 text-left hover:bg-surface"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-display text-[1.2rem] leading-tight font-semibold">
+            {title.title} <span className="text-muted">{season.label}</span>
+          </span>
+          <span className="mt-0.5 flex flex-wrap gap-x-3 text-[0.8125rem] text-muted">
+            {season.episodeCount !== null && <span>{plural(season.episodeCount, 'episode')}</span>}
+            {showYear && entry.releaseDate && <span>{entry.releaseDate.slice(0, 4)}</span>}
+            {phase !== null && <span>Phase {phase}</span>}
+            {status === 'upcoming' && (
+              <span className="text-fg">{entry.releaseDate ? formatCountdown(entry.releaseDate, today) : 'Date to be announced'}</span>
+            )}
+            {status === 'in-progress' && open && (
+              <span className="text-fg">
+                Watching{open.episodesWatched !== null && season.episodeCount !== null && `, ${open.episodesWatched}/${season.episodeCount}`}
+              </span>
+            )}
+            {status === 'watched' && <span className="text-fg">{entry.lastWatched ? formatDate(entry.lastWatched) : 'Date unknown'}</span>}
+          </span>
+        </span>
+        {entry.watchCount > 1 && (
+          <span className="shrink-0 rounded-md bg-raised px-1.5 py-0.5 text-xs font-bold tabular-nums" title={`Watched ${entry.watchCount} times`}>
+            ×{entry.watchCount}
+          </span>
+        )}
+      </button>
+    </li>
+  )
+}
 
 function StatusText({ view, today }: { view: TitleView; today: string }) {
   const { title, summary } = view
