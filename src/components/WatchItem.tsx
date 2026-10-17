@@ -5,6 +5,8 @@ import type { WatchPatch } from '../lib/watchActions.ts'
 import { formatWatch } from '../ui/format.ts'
 import { DateField } from './DateField.tsx'
 
+type WatchFields = Pick<Watch, 'startDate' | 'endDate' | 'approximate' | 'note'>
+
 /**
  * One viewing in a watch history. Movies edit a single date (start = end); seasons edit start and
  * end separately, and an open season watch has no end yet.
@@ -15,23 +17,17 @@ export function WatchItem({
   kind,
   onSave,
   onDelete,
+  initiallyEditing = false,
 }: {
   watch: Watch
+  /** Position in viewing order: 0 = first watch. */
   index: number
   kind: 'single' | 'range'
   onSave: (patch: WatchPatch) => void
   onDelete: () => void
+  initiallyEditing?: boolean
 }) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState<WatchPatch>({})
-  const merged = { ...watch, ...draft }
-  const open = watch.endDate === null && watch.startDate !== null
-
-  // Compare at the coarser precision: "2024" is not before "2024-03-04".
-  const len = Math.min(merged.startDate?.length ?? 0, merged.endDate?.length ?? 0)
-  const invalid =
-    kind === 'range' && len > 0 && comparePartialDates(merged.endDate!.slice(0, len), merged.startDate!.slice(0, len)) < 0
-
+  const [editing, setEditing] = useState(initiallyEditing)
   const ordinal = index === 0 ? 'First watch' : `Rewatch ${index}`
 
   if (!editing) {
@@ -44,10 +40,7 @@ export function WatchItem({
         </span>
         <button
           className="min-h-10 rounded-lg px-3 text-sm font-bold text-muted hover:bg-raised hover:text-fg"
-          onClick={() => {
-            setDraft({})
-            setEditing(true)
-          }}
+          onClick={() => setEditing(true)}
           aria-label={`Edit ${ordinal.toLowerCase()}`}
         >
           Edit
@@ -57,14 +50,54 @@ export function WatchItem({
   }
 
   return (
-    <li className="my-2 rounded-xl border border-line bg-surface p-3">
+    <li className="my-2">
+      <WatchEditor
+        initial={watch}
+        kind={kind}
+        stillWatching={watch.endDate === null && watch.startDate !== null}
+        onSave={(patch) => {
+          onSave(patch)
+          setEditing(false)
+        }}
+        onCancel={() => setEditing(false)}
+        onDelete={onDelete}
+      />
+    </li>
+  )
+}
+
+/** The date form, for editing a watch or adding one you had before. */
+export function WatchEditor({
+  initial,
+  kind,
+  stillWatching = false,
+  saveLabel = 'Save',
+  onSave,
+  onCancel,
+  onDelete,
+}: {
+  initial: WatchFields
+  kind: 'single' | 'range'
+  /** An open season watch: its finish date is set with Finish, not here. */
+  stillWatching?: boolean
+  saveLabel?: string
+  onSave: (patch: WatchPatch) => void
+  onCancel: () => void
+  onDelete?: () => void
+}) {
+  const [draft, setDraft] = useState<WatchPatch>({})
+  const merged = { ...initial, ...draft }
+
+  // Compare at the coarser precision: "2024" is not before "2024-03-04".
+  const len = Math.min(merged.startDate?.length ?? 0, merged.endDate?.length ?? 0)
+  const invalid =
+    kind === 'range' && len > 0 && comparePartialDates(merged.endDate!.slice(0, len), merged.startDate!.slice(0, len)) < 0
+
+  return (
+    <div className="rounded-xl border border-line bg-surface p-3">
       <div className="grid gap-4 sm:grid-cols-2">
         {kind === 'single' ? (
-          <DateField
-            label="Watched on"
-            value={merged.endDate}
-            onChange={(d) => setDraft({ ...draft, startDate: d, endDate: d })}
-          />
+          <DateField label="Watched on" value={merged.endDate} onChange={(d) => setDraft({ ...draft, startDate: d, endDate: d })} />
         ) : (
           <>
             <DateField
@@ -73,7 +106,7 @@ export function WatchItem({
               unknownHint="Start date unknown."
               onChange={(d) => setDraft({ ...draft, startDate: d })}
             />
-            {open && merged.endDate === null ? (
+            {stillWatching && merged.endDate === null ? (
               <div>
                 <p className="mb-1.5 text-sm font-bold">Finished</p>
                 <p className="text-sm text-muted">Still watching. Use Finish when you're done.</p>
@@ -113,21 +146,20 @@ export function WatchItem({
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           disabled={Boolean(invalid)}
-          onClick={() => {
-            onSave(draft)
-            setEditing(false)
-          }}
+          onClick={() => onSave(draft)}
           className="min-h-11 rounded-lg bg-primary px-4 font-bold text-on-primary disabled:opacity-50"
         >
-          Save
+          {saveLabel}
         </button>
-        <button onClick={() => setEditing(false)} className="min-h-11 rounded-lg px-4 font-bold text-muted hover:bg-raised hover:text-fg">
+        <button onClick={onCancel} className="min-h-11 rounded-lg px-4 font-bold text-muted hover:bg-raised hover:text-fg">
           Cancel
         </button>
-        <button onClick={onDelete} className="ml-auto min-h-11 rounded-lg px-4 font-bold text-danger hover:bg-raised">
-          Remove
-        </button>
+        {onDelete && (
+          <button onClick={onDelete} className="ml-auto min-h-11 rounded-lg px-4 font-bold text-danger hover:bg-raised">
+            Remove
+          </button>
+        )}
       </div>
-    </li>
+    </div>
   )
 }

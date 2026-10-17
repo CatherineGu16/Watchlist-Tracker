@@ -20,6 +20,8 @@ test('check off a movie, undo, and keep it after reload', async ({ page }) => {
 test('change a watch date to just a month', async ({ page }) => {
   await page.getByRole('button', { name: /^Iron Man Movie/ }).click()
   await sheet(page).getByRole('button', { name: 'Watched it today' }).click()
+  await sheet(page).getByRole('button', { name: 'More for Iron Man' }).click()
+  await page.getByRole('menuitem', { name: 'Watch history (1)' }).click()
   await sheet(page).getByRole('button', { name: 'Edit first watch' }).click()
   await sheet(page).getByRole('radio', { name: 'Month' }).click()
   await sheet(page).getByLabel('Watched on month').selectOption('03')
@@ -28,6 +30,8 @@ test('change a watch date to just a month', async ({ page }) => {
   await year.press('Enter')
   await sheet(page).getByRole('button', { name: 'Save' }).click()
   await expect(sheet(page).getByText('Mar 2019')).toBeVisible()
+  await sheet(page).getByRole('button', { name: 'Back' }).click()
+  await expect(sheet(page).getByRole('heading', { name: 'Last watched Mar 2019' })).toBeVisible()
   await page.keyboard.press('Escape')
   await expect(page.getByRole('button', { name: /^Iron Man Movie/ })).toContainText('Mar 2019')
 })

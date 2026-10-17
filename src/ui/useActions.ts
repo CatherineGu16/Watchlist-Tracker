@@ -19,7 +19,12 @@ import { useStore } from '../store/StoreContext.tsx'
 import type { Edit } from '../store/watchlistStore.ts'
 
 /** Every change goes through here: apply, save, and confirm with an Undo. */
-export function useActions(openDetail?: (titleId: string) => void) {
+export interface OpenDetailOptions {
+  /** Jump straight to editing the latest watch's date. */
+  editLatest?: boolean
+}
+
+export function useActions(openDetail?: (titleId: string, opts?: OpenDetailOptions) => void) {
   const store = useStore()
   const toast = useToast()
 
@@ -37,7 +42,7 @@ export function useActions(openDetail?: (titleId: string) => void) {
           const today = todayIso()
           const label = `Checked off ${v.title.title}`
           if (!store.apply((d, c) => checkOff(d, c, v.title.id, today), label)) return
-          toast(label, [...(openDetail ? [{ label: 'Change date', onClick: () => openDetail(v.title.id) }] : []), undo])
+          toast(label, [...(openDetail ? [{ label: 'Change date', onClick: () => openDetail(v.title.id, { editLatest: true }) }] : []), undo])
         } else if (finished.length === 1 && v.watches.length === 1) {
           run(`Unchecked ${v.title.title}`, (d, c) => deleteWatch(d, c, finished[0].id))
         } else {

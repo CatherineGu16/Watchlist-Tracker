@@ -8,6 +8,16 @@ import App from './App.tsx'
 
 afterEach(cleanup)
 
+// jsdom lacks the layout APIs Radix menus measure with.
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+} as unknown as typeof ResizeObserver
+Element.prototype.scrollIntoView ??= () => {}
+Element.prototype.hasPointerCapture ??= () => false
+Element.prototype.releasePointerCapture ??= () => {}
+
 // One store per page load, so these steps build on each other like a single session.
 describe('App', () => {
   it('checks off a movie, shows Undo, and undoes it', async () => {
@@ -47,9 +57,10 @@ describe('App', () => {
     render(<App />)
     await user.click(await screen.findByRole('button', { name: /^Loki: 0 of 2 seasons watched/ }))
     const sheet = await screen.findByRole('dialog')
-    await user.click(within(sheet).getByRole('button', { name: 'Mark all 2 seasons watched, date unknown' }))
+    await user.click(within(sheet).getByRole('button', { name: 'More for Loki' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Mark all 2 seasons watched, date unknown' }))
     expect(within(sheet).getByText('All caught up')).toBeInTheDocument()
-    expect(within(sheet).getAllByText('Date unknown')).toHaveLength(2)
+    expect(within(sheet).getAllByText('date unknown')).toHaveLength(2)
   })
 
   it('switches to Other Marvel and searches', async () => {

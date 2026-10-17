@@ -1,16 +1,35 @@
+import { useState } from 'react'
 import type { TitleView } from '../lib/catalogView.ts'
 import { todayIso } from '../lib/partialDate.ts'
-import { compareWatches, isReleased, seasonStatus } from '../lib/status.ts'
-import { formatCountdown, formatDate, plural } from '../ui/format.ts'
+import { compareWatches, isFinished, isReleased, seasonStatus } from '../lib/status.ts'
+import { formatCountdown, formatDate, formatWatch, plural } from '../ui/format.ts'
 import { sagaColor } from '../ui/sagas.ts'
 import type { useActions } from '../ui/useActions.ts'
+import { MoreMenu, type MenuItem } from './MoreMenu.tsx'
 import { SeasonCard } from './SeasonCard.tsx'
 import { Sheet } from './Sheet.tsx'
-import { WatchItem } from './WatchItem.tsx'
+import { WatchHistory } from './WatchHistory.tsx'
 
 type Actions = ReturnType<typeof useActions>
 
-export function TitleDetail({ view, actions, onClose }: { view: TitleView | null; actions: Actions; onClose: () => void }) {
+/** Which history the panel shows: the movie's (seasonId null) or one season's. */
+interface HistoryTarget {
+  seasonId: string | null
+  editId?: string
+}
+
+export function TitleDetail({
+  view,
+  actions,
+  editLatest = false,
+  onClose,
+}: {
+  view: TitleView | null
+  actions: Actions
+  /** Open straight into editing the latest watch's date (from "Change date"). */
+  editLatest?: boolean
+  onClose: () => void
+}) {
   return (
     <Sheet
       open={view !== null}
@@ -19,8 +38,27 @@ export function TitleDetail({ view, actions, onClose }: { view: TitleView | null
       accent={view ? sagaColor(view.title.saga) : undefined}
       description={view && <Facts view={view} />}
     >
-      {view && (view.title.type === 'series' ? <SeriesBody view={view} actions={actions} /> : <MovieBody view={view} actions={actions} />)}
+      {/* Keyed by title so switching titles starts on the main view. */}
+      {view && <DetailBody key={view.title.id} view={view} actions={actions} editLatest={editLatest} />}
     </Sheet>
+  )
+}
+
+function DetailBody({ view, actions, editLatest }: { view: TitleView; actions: Actions; editLatest: boolean }) {
+  const [history, setHistory] = useState<HistoryTarget | null>(() => {
+    if (!editLatest || view.title.type === 'series') return null
+    const latest = [...view.watches].sort(compareWatches).at(-1)
+    return latest ? { seasonId: null, editId: latest.id } : null
+  })
+
+  if (history) {
+    const season = history.seasonId ? (view.seasons.find((s) => s.id === history.seasonId) ?? null) : null
+    return <WatchHistory view={view} season={season} actions={actions} editId={history.editId} onBack={() => setHistory(null)} />
+  }
+  return view.title.type === 'series' ? (
+    <SeriesBody view={view} actions={actions} onHistory={(seasonId) => setHistory({ seasonId })} />
+  ) : (
+    <MovieBody view={view} actions={actions} onHistory={() => setHistory({ seasonId: null })} />
   )
 }
 
@@ -47,73 +85,73 @@ function Facts({ view }: { view: TitleView }) {
   )
 }
 
-function MovieBody({ view, actions }: { view: TitleView; actions: Actions }) {
-  const watches = [...view.watches].sort(compareWatches)
+/** Face up: when you last watched it and how many times. Every date lives in Watch history. */
+function MovieBody({ view, actions, onHistory }: { view: TitleView; actions: Actions; onHistory: () => void }) {
   const today = todayIso()
+  const finished = view.watches.filter(isFinished).sort(compareWatches)
+  const last = finished.at(-1)
+  const menu: MenuItem[] = [
+    view.watches.length ? { label: `Watch history (${view.watches.length})`, onSelect: onHistory } : { label: 'Add a past watch', onSelect: onHistory },
+    ...(!finished.length
+      ? [{ label: 'Watched, date unknown', onSelect: () => actions.logWatch(view, { startDate: null, endDate: null }, `Checked off ${view.title.title}`) }]
+      : []),
+  ]
+
   return (
     <section className="mt-2">
-      <h3 className="font-display text-xl font-semibold">{watches.length ? plural(watches.length, 'watch', 'watches') : 'Not watched yet'}</h3>
-      {watches.length > 0 && (
-        <ul className="mt-1 divide-y divide-line">
-          {watches.map((w, i) => (
-            <WatchItem
-              key={w.id}
-              watch={w}
-              index={i}
-              kind="single"
-              onSave={(patch) => actions.updateWatch(w.id, patch, `Updated ${view.title.title}`)}
-              onDelete={() => actions.deleteWatch(w.id, `Removed a watch of ${view.title.title}`)}
-            />
-          ))}
-        </ul>
-      )}
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          onClick={() => actions.logWatch(view, { startDate: today, endDate: today }, watches.length ? `Logged a rewatch of ${view.title.title}` : `Checked off ${view.title.title}`)}
-          className="min-h-11 rounded-lg bg-primary px-4 font-bold text-on-primary"
-        >
-          {watches.length ? 'Log a rewatch today' : 'Watched it today'}
-        </button>
-        <button
-          onClick={() => actions.logWatch(view, { startDate: null, endDate: null }, `Checked off ${view.title.title}`)}
-          className="min-h-11 rounded-lg px-4 font-bold text-muted hover:bg-raised hover:text-fg"
-        >
-          {watches.length ? 'Add one, date unknown' : 'Watched, date unknown'}
-        </button>
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-display text-xl font-semibold">
+            {last ? (last.startDate === null && last.endDate === null ? 'Watched, date unknown' : `Last watched ${formatWatch(last)}`) : 'Not watched yet'}
+          </h3>
+          {finished.length > 1 && <p className="text-sm text-muted">Watched {plural(finished.length, 'time')}</p>}
+        </div>
+        <MoreMenu label={`More for ${view.title.title}`} items={menu} />
       </div>
-      <p className="mt-2 text-sm text-muted">Use Edit on a watch to change its date.</p>
+      <button
+        onClick={() =>
+          actions.logWatch(view, { startDate: today, endDate: today }, finished.length ? `Logged a rewatch of ${view.title.title}` : `Checked off ${view.title.title}`)
+        }
+        className="mt-3 min-h-11 rounded-lg bg-primary px-4 font-bold text-on-primary"
+      >
+        {finished.length ? 'Log a rewatch today' : 'Watched it today'}
+      </button>
     </section>
   )
 }
 
-function SeriesBody({ view, actions }: { view: TitleView; actions: Actions }) {
+function SeriesBody({ view, actions, onHistory }: { view: TitleView; actions: Actions; onHistory: (seasonId: string) => void }) {
   const today = todayIso()
   const { summary } = view
   const remaining = view.seasons.filter((s) => isReleased(s.premiereDate, today) && seasonStatus(s, view.watches, today) === 'unwatched')
+  const menu: MenuItem[] =
+    remaining.length > 1
+      ? [
+          {
+            label: `Mark ${summary.seasonsDone === 0 && !view.watches.length ? `all ${remaining.length}` : `the other ${remaining.length}`} seasons watched, date unknown`,
+            onSelect: () => actions.markSeasonsWatchedUndated(view, remaining),
+          },
+        ]
+      : []
 
   return (
     <section className="mt-2">
-      <div className="flex items-baseline gap-2">
-        <h3 className="font-display text-xl font-semibold">
-          {summary.seasonsReleased === 0
-            ? 'No seasons out yet'
-            : summary.status === 'watched'
-              ? 'All caught up'
-              : `${summary.seasonsDone} of ${plural(summary.seasonsReleased, 'season')} watched`}
-        </h3>
-        {summary.watchCount > 1 && <span className="text-sm text-muted">Watched the whole show {summary.watchCount} times</span>}
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-display text-xl font-semibold">
+            {summary.seasonsReleased === 0
+              ? 'No seasons out yet'
+              : summary.status === 'watched'
+                ? 'All caught up'
+                : `${summary.seasonsDone} of ${plural(summary.seasonsReleased, 'season')} watched`}
+          </h3>
+          {summary.watchCount > 1 && <p className="text-sm text-muted">Watched the whole show {plural(summary.watchCount, 'time')}</p>}
+        </div>
+        <MoreMenu label={`More for ${view.title.title}`} items={menu} />
       </div>
-      {remaining.length > 1 && (
-        <button
-          onClick={() => actions.markSeasonsWatchedUndated(view, remaining)}
-          className="mt-2 min-h-11 rounded-lg px-3 text-sm font-bold text-muted hover:bg-raised hover:text-fg"
-        >
-          Mark {summary.seasonsDone === 0 && !view.watches.length ? `all ${remaining.length}` : `the other ${remaining.length}`} seasons watched, date unknown
-        </button>
-      )}
       <ol className="mt-3 space-y-3">
         {view.seasons.map((s) => (
-          <SeasonCard key={s.id} view={view} season={s} actions={actions} />
+          <SeasonCard key={s.id} view={view} season={s} actions={actions} onHistory={() => onHistory(s.id)} />
         ))}
       </ol>
     </section>

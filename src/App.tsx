@@ -21,7 +21,7 @@ import {
   type FilterValues,
   type ListQuery,
 } from './ui/listQuery.ts'
-import { useActions } from './ui/useActions.ts'
+import { useActions, type OpenDetailOptions } from './ui/useActions.ts'
 import { usePersistentState } from './ui/usePersistentState.ts'
 
 export default function App() {
@@ -49,10 +49,12 @@ function Shell({ store }: { store: WatchlistStore }) {
   const state = useWatchlistState(store)
   const views = useTitleViews(store)
   const [query, setQuery] = usePersistentState<ListQuery>('watchlist.query.v1', DEFAULT_QUERY, reviveQuery)
-  const [openId, setOpenId] = useState<string | null>(null)
+  const [detail, setDetail] = useState<{ id: string; editLatest: boolean } | null>(null)
+  const openId = detail?.id ?? null
+  const setOpenId = useCallback((id: string | null) => setDetail(id ? { id, editLatest: false } : null), [])
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const actions = useActions(useCallback((id: string) => setOpenId(id), []))
+  const actions = useActions(useCallback((id: string, opts?: OpenDetailOptions) => setDetail({ id, editLatest: Boolean(opts?.editLatest) }), []))
 
   const deferred = useDeferredValue(query)
   const filtered = useMemo(() => filterViews(views, deferred), [views, deferred])
@@ -131,7 +133,7 @@ function Shell({ store }: { store: WatchlistStore }) {
         sagas={sagas}
         phases={phases}
       />
-      <TitleDetail view={openView} actions={actions} onClose={() => setOpenId(null)} />
+      <TitleDetail view={openView} actions={actions} editLatest={detail?.editLatest} onClose={() => setOpenId(null)} />
       <Settings open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   )
