@@ -177,6 +177,8 @@ function Shell({ store }: { store: WatchlistStore }) {
         </main>
       )}
 
+      {/* Backs the status bar so the list doesn't scroll visibly behind it above the stuck toolbar. */}
+      <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-bg" />
       <TabBar page={route.page} onAdd={openAdd} />
       <TitleDetail
         view={openView}
