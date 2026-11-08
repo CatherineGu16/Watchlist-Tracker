@@ -121,6 +121,27 @@ body {
   }
 }
 
+/*
+ * iOS home screen app: until the page scrolls, iOS lays fixed elements out in a viewport that's short by the
+ * status bar, so bottom: 0 floats ~60pt above the screen edge on pages too short to scroll (Home).
+ * The large viewport (lvh) is the real screen height either way, so pin to that instead.
+ */
+@utility pin-bottom {
+  bottom: 0;
+  @media (display-mode: standalone) {
+    top: 100lvh;
+    bottom: auto;
+    translate: 0 -100%;
+  }
+}
+@utility fill-screen {
+  inset: 0;
+  @media (display-mode: standalone) {
+    bottom: auto;
+    height: 100lvh;
+  }
+}
+
 @keyframes sheet-up {
   from {
     transform: translateY(100%);
