@@ -58,7 +58,7 @@ export function TabBar({ page, onAdd }: { page: Page; onAdd: () => void }) {
   return (
     <nav
       aria-label="Pages"
-      className="pin-bottom fixed inset-x-0 z-30 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
     >
       <ul className="mx-auto flex max-w-md">
         {PAGES.map((p) => (

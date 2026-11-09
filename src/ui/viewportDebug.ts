@@ -58,6 +58,7 @@ function log(name: string) {
 export function startViewportDebug() {
   recordViewport('launch')
   window.addEventListener('load', () => requestAnimationFrame(() => recordViewport('load')))
+  setTimeout(() => recordViewport('0.5s'), 500)
   setTimeout(() => recordViewport('2s'), 2000)
   for (const name of ['resize', 'orientationchange', 'pageshow', 'hashchange']) window.addEventListener(name, () => log(name))
   window.addEventListener('scroll', () => log('scroll'), { once: true })
