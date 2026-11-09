@@ -4,6 +4,7 @@ import { GroupPlacement } from './GroupPlacement.tsx'
 import { Sheet } from './Sheet.tsx'
 import { SyncPanel } from './SyncPanel.tsx'
 import { ThemePicker } from './ThemePicker.tsx'
+import { ViewportDebug } from './ViewportDebug.tsx'
 
 export function Settings({
   open,
@@ -21,6 +22,7 @@ export function Settings({
         <GroupPlacement actions={actions} />
         <BackupPanel />
         <ThemePicker />
+        <ViewportDebug />
       </div>
     </Sheet>
   )
