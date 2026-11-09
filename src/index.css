@@ -95,12 +95,26 @@
   --font-weight-bold: 600;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* The page itself never scrolls (the content above the tab bar does), so it doesn't drag or bounce. */
+html,
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 html {
   background: var(--bg);
   -webkit-text-size-adjust: 100%;
 }
 
 body {
+  margin: 0;
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);

@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { ActiveFilterChips, FilterDrawer, FilterSidebar } from './components/Filters.tsx'
 import { BrowseHeader } from './components/BrowseHeader.tsx'
 import { Home } from './components/Home.tsx'
@@ -71,8 +71,9 @@ function Shell({ store }: { store: WatchlistStore }) {
   const actions = useActions(openDetail)
 
   // A new page starts at its top; the list's scroll position would otherwise carry over to Home.
+  const scroller = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    window.scrollTo(0, 0)
+    scroller.current?.scrollTo(0, 0)
   }, [route.page])
 
   const deferred = useDeferredValue(query)
@@ -109,73 +110,79 @@ function Shell({ store }: { store: WatchlistStore }) {
   const editingView = form.editingId ? (views.find((v) => v.title.id === form.editingId) ?? null) : null
 
   return (
-    <div className="mx-auto min-h-dvh max-w-3xl pb-[calc(env(safe-area-inset-bottom)+6rem)] lg:max-w-6xl lg:pb-24">
-      <AppBar
-        page={route.page}
-        onSettings={openSettings}
-        syncChip={<SyncChip onSettings={openSettings} />}
-        actions={
-          <button onClick={openAdd} className="mr-1 hidden min-h-10 items-center gap-1.5 rounded-lg bg-raised px-3 font-bold hover:bg-line lg:inline-flex">
-            <svg viewBox="0 0 20 20" className="size-4" aria-hidden="true">
-              <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            Add title
-          </button>
-        }
-      />
-      {state.error && (
-        <p role="alert" className="mx-3 mb-3 rounded-lg bg-danger/15 p-3 text-sm text-danger sm:mx-4">
-          {state.error}
-        </p>
-      )}
-      {!state.durable && (
-        <p className="mx-3 mb-3 rounded-lg bg-raised p-3 text-sm sm:mx-4">This browser is blocking storage, so changes last only until you close the tab.</p>
-      )}
-      {state.data.watches.length === 0 && (
-        <div className="mx-3 mb-6 rounded-xl border border-line bg-surface p-4 sm:mx-4">
-          <p className="font-bold">Start checking things off, or bring in your history.</p>
-          <p className="mt-1 text-sm text-muted">Already set up on another device? Connect sync or import a backup in Settings.</p>
-          <button onClick={openSettings} className="mt-3 min-h-11 rounded-lg bg-raised px-4 text-sm font-bold hover:bg-line">
-            Open Settings
-          </button>
-        </div>
-      )}
-
-      {route.page === 'home' ? (
-        <main>
-          <Home views={views} actions={actions} onOpen={openDetail} onBrowse={() => goTo('browse')} />
-        </main>
-      ) : (
-        <main>
-          <BrowseHeader views={views} universe={query.universe} onUniverse={(u) => update({ universe: u })} onOpen={openDetail} />
-          <div className="mt-4 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
-            <FilterSidebar value={filterValues} onChange={update} sagas={sagas} phases={phases} />
-            <div className="min-w-0">
-              <Toolbar query={query} onChange={update} onOpenFilters={() => setFiltersOpen(true)}>
-                <ActiveFilterChips value={filterValues} onChange={update} />
-              </Toolbar>
-              <TitleList
-                groups={groups}
-                showYear={deferred.sort !== 'release' && deferred.sort !== 'release-seasons'}
-                onToggle={toggleEntry}
-                onOpen={openDetail}
-                filtered={activeFilterCount(query) > 0 || query.search !== ''}
-                onClearFilters={() => update({ type: 'all', sagas: [], phase: null, status: 'all', search: '' })}
-              />
-            </div>
-          </div>
-          <FilterDrawer
-            open={filtersOpen}
-            onOpenChange={setFiltersOpen}
-            value={filterValues}
-            onApply={update}
-            countFor={countFor}
-        noun={deferred.sort === 'release-seasons' ? 'result' : 'title'}
-            sagas={sagas}
-            phases={phases}
+    // The page itself never scrolls, only the content above the tab bar: on a page that scrolls, the iOS
+    // home screen app launches with a viewport short by the status bar, cutting off the tab bar.
+    <div className="flex h-full flex-col">
+      <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-3xl pb-6 lg:max-w-6xl lg:pb-24">
+          <AppBar
+            page={route.page}
+            onSettings={openSettings}
+            syncChip={<SyncChip onSettings={openSettings} />}
+            actions={
+              <button onClick={openAdd} className="mr-1 hidden min-h-10 items-center gap-1.5 rounded-lg bg-raised px-3 font-bold hover:bg-line lg:inline-flex">
+                <svg viewBox="0 0 20 20" className="size-4" aria-hidden="true">
+                  <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                Add title
+              </button>
+            }
           />
-        </main>
-      )}
+          {state.error && (
+            <p role="alert" className="mx-3 mb-3 rounded-lg bg-danger/15 p-3 text-sm text-danger sm:mx-4">
+              {state.error}
+            </p>
+          )}
+          {!state.durable && (
+            <p className="mx-3 mb-3 rounded-lg bg-raised p-3 text-sm sm:mx-4">This browser is blocking storage, so changes last only until you close the tab.</p>
+          )}
+          {state.data.watches.length === 0 && (
+            <div className="mx-3 mb-6 rounded-xl border border-line bg-surface p-4 sm:mx-4">
+              <p className="font-bold">Start checking things off, or bring in your history.</p>
+              <p className="mt-1 text-sm text-muted">Already set up on another device? Connect sync or import a backup in Settings.</p>
+              <button onClick={openSettings} className="mt-3 min-h-11 rounded-lg bg-raised px-4 text-sm font-bold hover:bg-line">
+                Open Settings
+              </button>
+            </div>
+          )}
+
+          {route.page === 'home' ? (
+            <main>
+              <Home views={views} actions={actions} onOpen={openDetail} onBrowse={() => goTo('browse')} />
+            </main>
+          ) : (
+            <main>
+              <BrowseHeader views={views} universe={query.universe} onUniverse={(u) => update({ universe: u })} onOpen={openDetail} />
+              <div className="mt-4 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+                <FilterSidebar value={filterValues} onChange={update} sagas={sagas} phases={phases} />
+                <div className="min-w-0">
+                  <Toolbar query={query} onChange={update} onOpenFilters={() => setFiltersOpen(true)}>
+                    <ActiveFilterChips value={filterValues} onChange={update} />
+                  </Toolbar>
+                  <TitleList
+                    groups={groups}
+                    showYear={deferred.sort !== 'release' && deferred.sort !== 'release-seasons'}
+                    onToggle={toggleEntry}
+                    onOpen={openDetail}
+                    filtered={activeFilterCount(query) > 0 || query.search !== ''}
+                    onClearFilters={() => update({ type: 'all', sagas: [], phase: null, status: 'all', search: '' })}
+                  />
+                </div>
+              </div>
+              <FilterDrawer
+                open={filtersOpen}
+                onOpenChange={setFiltersOpen}
+                value={filterValues}
+                onApply={update}
+                countFor={countFor}
+            noun={deferred.sort === 'release-seasons' ? 'result' : 'title'}
+                sagas={sagas}
+                phases={phases}
+              />
+            </main>
+          )}
+        </div>
+      </div>
 
       {/* Backs the status bar so the list doesn't scroll visibly behind it above the stuck toolbar. */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-bg" />

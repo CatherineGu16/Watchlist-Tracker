@@ -23,6 +23,7 @@ globalThis.ResizeObserver ??= class {
   disconnect() {}
 } as unknown as typeof ResizeObserver
 Element.prototype.scrollIntoView ??= () => {}
+Element.prototype.scrollTo ??= () => {}
 Element.prototype.hasPointerCapture ??= () => false
 Element.prototype.releasePointerCapture ??= () => {}
 
