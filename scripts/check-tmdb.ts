@@ -59,6 +59,7 @@ interface MovieDetails {
   title: string
   release_date?: string
   production_companies: Company[]
+  release_dates: { results: { iso_3166_1: string; release_dates: { release_date: string; type: number }[] }[] }
 }
 interface TvDetails {
   id: number
@@ -81,9 +82,22 @@ async function allPages<T>(path: string, params: Record<string, string>): Promis
   return out
 }
 
+/**
+ * TMDB's own release date is the earliest anywhere, often an overseas opening days before the US.
+ * Use the first US theatrical release, else digital, else TV; premieres and festival showings don't count.
+ */
+function usRelease(m: MovieDetails): string | null {
+  const us = m.release_dates.results.find((r) => r.iso_3166_1 === 'US')?.release_dates ?? []
+  for (const type of [3, 2, 4, 6]) {
+    const dates = us.filter((d) => d.type === type).map((d) => d.release_date.slice(0, 10)).sort()
+    if (dates.length) return dates[0]
+  }
+  return dateOrNull(m.release_date)
+}
+
 async function movie(id: number): Promise<TmdbItem> {
-  const m = await tmdb<MovieDetails>(`/movie/${id}`)
-  return { kind: 'movie', id, name: m.title, date: dateOrNull(m.release_date), companies: m.production_companies.map((c) => c.name) }
+  const m = await tmdb<MovieDetails>(`/movie/${id}`, { append_to_response: 'release_dates' })
+  return { kind: 'movie', id, name: m.title, date: usRelease(m), companies: m.production_companies.map((c) => c.name) }
 }
 
 async function show(id: number): Promise<TmdbItem> {

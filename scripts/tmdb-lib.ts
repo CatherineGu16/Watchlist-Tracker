@@ -34,10 +34,15 @@ export const normalizeName = (name: string) => name.toLowerCase().replace(/&/g, 
 
 const year = (date: string | null) => (date ? Number(date.slice(0, 4)) : null)
 
-/** The catalog title TMDB's item refers to, if any. Same name, a compatible type, and released within a year. */
+/**
+ * The catalog title TMDB's item refers to, if any: the one with its TMDB id (so a renamed
+ * "Untitled X-Men Film" still matches), else the same name, a compatible type, and released within a year.
+ */
 export function findTitle(titles: Title[], item: TmdbItem): Title | undefined {
   const name = normalizeName(item.name)
   const types = item.kind === 'movie' ? ['movie', 'special'] : ['series', 'special']
+  const byId = titles.find((t) => t.tmdbId === item.id && types.includes(t.type))
+  if (byId) return byId
   return titles.find((t) => {
     if (normalizeName(t.title) !== name || !types.includes(t.type)) return false
     const [a, b] = [year(t.releaseDate), year(item.date)]
@@ -84,7 +89,10 @@ export function classify(item: TmdbItem, titles: Title[]): Omit<Title, 'id' | 't
   return other('classic', 'Classic Marvel', item.companies.find((c) => !/^Marvel Entertainment$/i.test(c)) ?? item.companies[0] ?? 'Marvel')
 }
 
-function makeSeason(title: Title, s: TmdbSeason, titles: Title[]): Season {
+/** TMDB counts only the episodes listed so far, so a count is trusted once the season has started. */
+const episodesOf = (s: TmdbSeason, today: string) => (s.airDate && s.airDate <= today && s.episodeCount) || null
+
+function makeSeason(title: Title, s: TmdbSeason, titles: Title[], today: string): Season {
   // A season of an MCU show belongs to the phase running when it premieres.
   const phase =
     title.universe === 'mcu' && s.airDate ? (classify({ kind: 'tv', id: 0, name: '', date: s.airDate, companies: ['Marvel Studios'] }, titles).phase ?? title.phase) : title.phase
@@ -93,7 +101,7 @@ function makeSeason(title: Title, s: TmdbSeason, titles: Title[]): Season {
     titleId: title.id,
     number: s.number,
     label: `Season ${s.number}`,
-    episodeCount: s.episodeCount || null,
+    episodeCount: episodesOf(s, today),
     premiereDate: s.airDate,
     phase,
   }
@@ -123,10 +131,19 @@ export function planUpdates(catalog: Catalog, items: TmdbItem[], ignore: IgnoreL
       title = { id, title: item.name, type: item.kind === 'movie' ? 'movie' : 'series', releaseDate: item.date, tmdbId: item.id, posterPath: null, ...meta }
       titles.push(title)
       changes.push({ kind: 'title', item, title, guessed })
-    } else if (item.date && unreleased(title.releaseDate, today) && item.date !== title.releaseDate) {
+    } else if (unreleased(title.releaseDate, today)) {
+      // Not out yet: take TMDB's newer name and date. The id stays, since watches point at it.
       const i = titles.indexOf(title)
-      changes.push({ kind: 'update', item, what: `${title.title}: release date`, from: title.releaseDate ?? 'TBA', to: item.date })
-      title = titles[i] = { ...title, releaseDate: item.date }
+      const next = { ...title, tmdbId: item.id }
+      if (normalizeName(item.name) !== normalizeName(title.title)) {
+        changes.push({ kind: 'update', item, what: `${title.title}: title`, from: title.title, to: item.name })
+        next.title = item.name
+      }
+      if (item.date && item.date !== title.releaseDate) {
+        changes.push({ kind: 'update', item, what: `${title.title}: release date`, from: title.releaseDate ?? 'TBA', to: item.date })
+        next.releaseDate = item.date
+      }
+      title = titles[i] = next
     }
 
     if (title.type !== 'series') continue
@@ -134,7 +151,7 @@ export function planUpdates(catalog: Catalog, items: TmdbItem[], ignore: IgnoreL
       if (s.number < 1) continue
       const i = seasons.findIndex((x) => x.titleId === title.id && x.number === s.number)
       if (i === -1) {
-        const season = makeSeason(title, s, titles)
+        const season = makeSeason(title, s, titles, today)
         seasons.push(season)
         changes.push({ kind: 'season', item, title, season })
         continue
@@ -146,9 +163,10 @@ export function planUpdates(catalog: Catalog, items: TmdbItem[], ignore: IgnoreL
         changes.push({ kind: 'update', item, what: `${label}: premiere`, from: old.premiereDate ?? 'TBA', to: s.airDate })
         seasons[i] = { ...seasons[i], premiereDate: s.airDate }
       }
-      if (s.episodeCount && s.episodeCount !== old.episodeCount) {
-        changes.push({ kind: 'update', item, what: `${label}: episodes`, from: String(old.episodeCount ?? 'TBA'), to: String(s.episodeCount) })
-        seasons[i] = { ...seasons[i], episodeCount: s.episodeCount }
+      const episodes = episodesOf(s, today)
+      if (episodes && episodes !== old.episodeCount) {
+        changes.push({ kind: 'update', item, what: `${label}: episodes`, from: String(old.episodeCount ?? 'TBA'), to: String(episodes) })
+        seasons[i] = { ...seasons[i], episodeCount: episodes }
       }
     }
   }

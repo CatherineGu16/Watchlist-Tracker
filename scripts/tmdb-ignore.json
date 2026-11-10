@@ -1,5 +1,5 @@
 {
   "_comment": "TMDB ids the monthly check (scripts/check-tmdb.ts) never proposes again. Add an id here when you turn a suggestion down.",
-  "movie": [],
-  "tv": []
+  "movie": [1750432],
+  "tv": [305165]
 }

@@ -95,7 +95,31 @@ describe('planUpdates', () => {
     })
     const { catalog, changes } = planUpdates(CATALOG, [show], NONE, TODAY)
     expect(changes.map((c) => c.kind)).toEqual(['title', 'season'])
-    expect(catalog.seasons.at(-1)).toMatchObject({ id: 'wonder-woman-2027-s1', titleId: 'wonder-woman-2027', episodeCount: 8, premiereDate: '2027-03-01' })
+    // TMDB lists only some episodes of a season that hasn't started, so the count waits.
+    expect(catalog.seasons.at(-1)).toMatchObject({ id: 'wonder-woman-2027-s1', titleId: 'wonder-woman-2027', episodeCount: null, premiereDate: '2027-03-01' })
+  })
+
+  it('takes episode counts only once a season has started', () => {
+    const show = (episodeCount: number, airDate: string) =>
+      marvel({ id: 17, kind: 'tv', name: 'Echo', date: '2026-11-01', seasons: [{ number: 1, episodeCount, airDate }] })
+    const withEcho: Catalog = {
+      ...CATALOG,
+      titles: [...CATALOG.titles, title({ id: 'echo-2026', title: 'Echo', type: 'series', releaseDate: '2026-11-01' })],
+      seasons: [...CATALOG.seasons, season({ titleId: 'echo-2026', number: 1 })],
+    }
+    expect(planUpdates(withEcho, [show(1, '2027-01-13')], NONE, TODAY).changes.map((c) => c.kind === 'update' && c.what)).toEqual(['Echo Season 1: premiere'])
+    expect(planUpdates(withEcho, [show(6, '2026-11-01')], NONE, TODAY).changes.map((c) => c.kind === 'update' && c.what)).toEqual([
+      'Echo Season 1: premiere',
+      'Echo Season 1: episodes',
+    ])
+  })
+
+  it('follows a title TMDB renamed, by its TMDB id', () => {
+    const added = planUpdates(CATALOG, [marvel({ id: 18, name: 'Untitled X-Men Film', date: '2028-05-04' })], NONE, TODAY).catalog
+    const { catalog, changes } = planUpdates(added, [marvel({ id: 18, name: 'X-Men: First Class Act', date: '2028-05-05' })], NONE, TODAY)
+    expect(changes.map((c) => c.kind === 'update' && c.what)).toEqual(['Untitled X-Men Film: title', 'Untitled X-Men Film: release date'])
+    expect(catalog.titles.at(-1)).toMatchObject({ id: 'untitled-x-men-film-2028', title: 'X-Men: First Class Act', releaseDate: '2028-05-05' })
+    expect(catalog.titles).toHaveLength(added.titles.length)
   })
 
   it('adds a new season to a show already in the catalog', () => {
