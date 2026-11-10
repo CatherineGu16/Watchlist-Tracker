@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-17T19:59:50.138Z",
+  "generatedAt": "2026-11-10T23:37:26.322Z",
   "titles": [
     {
       "id": "the-punisher-1989",
@@ -1693,7 +1693,7 @@
       "id": "avengers-doomsday-2026",
       "title": "Avengers: Doomsday",
       "type": "movie",
-      "releaseDate": "2026-12-18",
+      "releaseDate": "2026-12-16",
       "universe": "mcu",
       "collection": "marvel-studios",
       "saga": "Multiverse Saga",
@@ -1707,7 +1707,7 @@
       "id": "avengers-secret-wars-2027",
       "title": "Avengers: Secret Wars",
       "type": "movie",
-      "releaseDate": "2027-12-17",
+      "releaseDate": "2027-12-15",
       "universe": "mcu",
       "collection": "marvel-studios",
       "saga": "Multiverse Saga",
@@ -1716,6 +1716,90 @@
       "studio": "Marvel Studios",
       "tmdbId": null,
       "posterPath": null
+    },
+    {
+      "id": "spidey-and-the-avengers-halloween-team-up-2026",
+      "title": "Spidey and the Avengers: Halloween Team-Up!",
+      "type": "movie",
+      "releaseDate": "2026-09-24",
+      "tmdbId": 1750432,
+      "posterPath": null,
+      "universe": "mcu",
+      "collection": "marvel-studios",
+      "saga": "Multiverse Saga",
+      "phase": 6,
+      "chronoIndex": 74,
+      "studio": "Marvel Studios"
+    },
+    {
+      "id": "spider-man-beyond-the-spider-verse-2027",
+      "title": "Spider-Man: Beyond the Spider-Verse",
+      "type": "movie",
+      "releaseDate": "2027-06-16",
+      "tmdbId": 911916,
+      "posterPath": null,
+      "universe": "other",
+      "collection": "sony-spider-man",
+      "saga": "Spider-Man",
+      "phase": null,
+      "chronoIndex": null,
+      "studio": "Sony Pictures Animation"
+    },
+    {
+      "id": "untitled-x-men-film-2028",
+      "title": "Untitled X-Men Film",
+      "type": "movie",
+      "releaseDate": "2028-05-04",
+      "tmdbId": 1293690,
+      "posterPath": null,
+      "universe": "mcu",
+      "collection": "marvel-studios",
+      "saga": "Multiverse Saga",
+      "phase": 6,
+      "chronoIndex": 75,
+      "studio": "Marvel Studios"
+    },
+    {
+      "id": "ghost-rider-2028",
+      "title": "Ghost Rider",
+      "type": "movie",
+      "releaseDate": "2028-07-27",
+      "tmdbId": 1738010,
+      "posterPath": null,
+      "universe": "mcu",
+      "collection": "marvel-studios",
+      "saga": "Multiverse Saga",
+      "phase": 6,
+      "chronoIndex": 76,
+      "studio": "Marvel Studios"
+    },
+    {
+      "id": "black-panther-3-2028",
+      "title": "Black Panther 3",
+      "type": "movie",
+      "releaseDate": "2028-12-13",
+      "tmdbId": 1386618,
+      "posterPath": null,
+      "universe": "mcu",
+      "collection": "marvel-studios",
+      "saga": "Multiverse Saga",
+      "phase": 6,
+      "chronoIndex": 77,
+      "studio": "Marvel Studios"
+    },
+    {
+      "id": "lego-marvel-avengers-strange-tails-2025",
+      "title": "LEGO Marvel Avengers: Strange Tails",
+      "type": "series",
+      "releaseDate": "2025-11-14",
+      "tmdbId": 305165,
+      "posterPath": null,
+      "universe": "mcu",
+      "collection": "marvel-studios",
+      "saga": "Multiverse Saga",
+      "phase": 5,
+      "chronoIndex": 78,
+      "studio": "Marvel Studios"
     }
   ],
   "seasons": [
@@ -2264,9 +2348,27 @@
       "titleId": "your-friendly-neighborhood-spider-man-2025",
       "number": 2,
       "label": "Season 2",
-      "episodeCount": null,
+      "episodeCount": 1,
       "premiereDate": "2027-01-13",
       "phase": 6
+    },
+    {
+      "id": "lego-marvel-avengers-strange-tails-2025-s1",
+      "titleId": "lego-marvel-avengers-strange-tails-2025",
+      "number": 1,
+      "label": "Season 1",
+      "episodeCount": 2,
+      "premiereDate": "2025-11-14",
+      "phase": 5
+    },
+    {
+      "id": "x-men-97-2024-s2",
+      "titleId": "x-men-97-2024",
+      "number": 2,
+      "label": "Season 2",
+      "episodeCount": 9,
+      "premiereDate": "2026-07-01",
+      "phase": null
     }
   ]
 }
