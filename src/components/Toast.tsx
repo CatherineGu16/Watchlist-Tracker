@@ -36,7 +36,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       */}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 top-0 z-[70] flex justify-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:top-auto sm:bottom-0 sm:pt-0 sm:pb-[calc(env(safe-area-inset-bottom)+4.5rem)] lg:pb-4"
+        className="pointer-events-none fixed inset-x-0 top-0 z-[70] standalone:absolute flex justify-center px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:top-auto sm:bottom-0 sm:pt-0 sm:pb-[calc(env(safe-area-inset-bottom)+4.5rem)] lg:pb-4"
       >
         {toast && (
           <div

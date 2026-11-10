@@ -108,6 +108,26 @@ body {
   overscroll-behavior: none;
 }
 
+/*
+ * iOS home screen app: it launches with the screen measured short by the status bar, and only re-measures
+ * once the page scrolls, which this page never does. Everything sized to the screen (the layout ending in
+ * the tab bar, sheets and their overlay) stopped short, leaving a strip at the bottom. The large viewport
+ * (lvh) is the real screen height, so size the page to that, and place overlays against the page
+ * (standalone:absolute) instead of the short viewport.
+ */
+@custom-variant standalone (@media (display-mode: standalone));
+
+@media (display-mode: standalone) {
+  html,
+  body,
+  #root {
+    height: 100lvh;
+  }
+  body {
+    position: relative;
+  }
+}
+
 html {
   background: var(--bg);
   -webkit-text-size-adjust: 100%;
