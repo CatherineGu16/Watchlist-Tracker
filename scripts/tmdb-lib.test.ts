@@ -170,6 +170,6 @@ describe('summarize', () => {
     const md = summarize(changes)
     expect(md).toContain('**Shang-Chi 2** (movie, 2027-07-01)')
     expect(md).toContain('https://www.themoviedb.org/movie/10')
-    expect(md).toContain('not endorsed or certified by TMDB')
+    expect(md).toContain('not endorsed, certified, or otherwise approved by TMDB')
   })
 })

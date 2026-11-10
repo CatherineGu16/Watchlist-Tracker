@@ -207,7 +207,7 @@ export function summarize(changes: Change[]): string {
     "- Not something you want in the catalog? Remove it from `src/data/catalog.json` and add its TMDB id to `scripts/tmdb-ignore.json`, so it isn't proposed again.",
     "- While this pull request is open, next month's check leaves it alone, so merge or close it before then.",
     '',
-    '_This product uses the TMDB API but is not endorsed or certified by TMDB._',
+    '_This application uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB._',
   )
   return lines.join('\n') + '\n'
 }

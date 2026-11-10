@@ -122,7 +122,7 @@ on **Settings → Actions → General → Allow GitHub Actions to create and app
 To run the check locally, put `TMDB_TOKEN=<token>` in `.env.local` (git-ignored) and run
 `npm run check:tmdb`.
 
-This product uses the TMDB API but is not endorsed or certified by TMDB.
+This application uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.
 
 ### Icons
 

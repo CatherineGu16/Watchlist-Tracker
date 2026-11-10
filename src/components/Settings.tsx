@@ -21,6 +21,13 @@ export function Settings({
         <GroupPlacement actions={actions} />
         <BackupPanel />
         <ThemePicker />
+        {/* TMDB's API terms ask for its logo and this exact notice, less prominent than the app's own name. */}
+        <footer className="flex flex-col items-start gap-1.5 px-1 pt-2 text-xs text-muted">
+          <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer" aria-label="TMDB">
+            <img src={`${import.meta.env.BASE_URL}tmdb-logo.svg`} alt="TMDB" className="h-2.5 w-auto" />
+          </a>
+          <p>This application uses TMDB and the TMDB APIs but is not endorsed, certified, or otherwise approved by TMDB.</p>
+        </footer>
       </div>
     </Sheet>
   )
