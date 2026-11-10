@@ -1,0 +1,59 @@
+# Monthly: checks TMDB for new Marvel movies, shows and seasons, and opens a pull request adding them
+# to the catalog. Merging it deploys as usual.
+# One-time setup: add the TMDB_TOKEN repository secret, and allow
+# Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests".
+name: Check TMDB for new titles
+
+on:
+  schedule:
+    # 1st of the month, 15:00 UTC (7 or 8 am Pacific).
+    - cron: '0 15 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: tmdb
+
+env:
+  BRANCH: tmdb/new-titles
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # An open pull request may have your edits on it, so leave it be until it's merged or closed.
+      - id: open
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "count=$(gh pr list --head "$BRANCH" --state open --json number --jq length)" >> "$GITHUB_OUTPUT"
+
+      - if: steps.open.outputs.count == '0'
+        run: node scripts/check-tmdb.ts --summary "$RUNNER_TEMP/summary.md"
+        env:
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+
+      - if: steps.open.outputs.count == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet; then
+            echo "Catalog is up to date."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C "$BRANCH"
+          git commit -am 'Catalog: new titles and dates from TMDB'
+          git push --force origin "$BRANCH"
+          gh pr create --head "$BRANCH" --base main --title 'New titles from TMDB' --body-file "$RUNNER_TEMP/summary.md"
+
+      - if: steps.open.outputs.count != '0'
+        run: echo "A TMDB pull request is still open; merge or close it, then run this again."

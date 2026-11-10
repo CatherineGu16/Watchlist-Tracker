@@ -4,10 +4,8 @@ import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
 import './index.css'
 import { applyTheme, readThemePref } from './ui/theme.ts'
-import { startViewportDebug } from './ui/viewportDebug.ts'
 
 applyTheme(readThemePref())
-startViewportDebug()
 // Caches the app for offline use; a new version takes over on the next launch.
 registerSW({ immediate: true })
 

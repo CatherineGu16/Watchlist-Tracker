@@ -84,6 +84,7 @@ First time running browser tests: `npx playwright install chromium webkit`.
 |---|---|
 | `src/data/catalog.json` | Every title and season (public facts, no personal data) |
 | `scripts/catalog-meta.ts` | Phases, story order, MCU/Other split, titles added beyond the sheet |
+| `scripts/check-tmdb.ts`, `scripts/tmdb-lib.ts` | Monthly check of TMDB for new releases |
 | `src/lib/` | Dates, watched/in-progress rules, edits, merging |
 | `src/store/` | On-device storage (IndexedDB), undo |
 | `src/sync/` | GitHub sync |
@@ -102,6 +103,26 @@ This reads `data/source/*.csv` (your Google Sheet export) and writes `src/data/c
 `data/private/watchlist.json` (your watch history). Both `data/source/` and `data/private/` are
 git-ignored. Never commit them, since this repo is public. To load the imported history into the
 app, use **Settings → Backup → Import** with `data/private/watchlist.json`.
+
+Rebuilding from the sheet replaces `src/data/catalog.json`, dropping titles the monthly TMDB check
+added (below) unless they are also in the sheet or `scripts/catalog-meta.ts`.
+
+### New releases from TMDB
+
+On the 1st of each month, `.github/workflows/tmdb.yml` checks [TMDB](https://www.themoviedb.org/)
+for Marvel movies and shows from the past year or coming up, new seasons of recent shows, and new
+dates for anything not out yet. It opens a pull request editing `src/data/catalog.json`, listing what
+it guessed (MCU or Other, phase, story order) for you to check before merging. To turn a suggestion
+down for good, add its TMDB id to `scripts/tmdb-ignore.json`. Run it any time from the Actions tab
+(**Check TMDB for new titles → Run workflow**).
+
+One-time setup: add TMDB's **API Read Access Token** as the `TMDB_TOKEN` repository secret, and turn
+on **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests**.
+
+To run the check locally, put `TMDB_TOKEN=<token>` in `.env.local` (git-ignored) and run
+`npm run check:tmdb`.
+
+This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 ### Icons
 
