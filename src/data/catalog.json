@@ -577,7 +577,8 @@
       "phase": 2,
       "chronoIndex": 3,
       "studio": "Marvel Studios",
-      "tmdbId": null,
+      "tmdbId": 211387,
+      "tmdbType": "movie",
       "posterPath": null,
       "note": "Marvel One-Shot"
     },
