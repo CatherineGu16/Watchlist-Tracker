@@ -139,10 +139,13 @@ async function movie(id: number): Promise<TmdbItem> {
   }
 }
 
-/** A season's total minutes, once it has finished airing and every episode's length is listed. */
-function seasonRuntime(s: SeasonDetails | undefined, today: string): number | null {
+/**
+ * A season's total minutes, once it has finished airing and every episode's length is listed. The
+ * full season (`s`) lists episodes but no count, so the show's summary of it (`count`) says how many to expect.
+ */
+function seasonRuntime(s: SeasonDetails | undefined, count: number | undefined, today: string): number | null {
   const eps = s?.episodes ?? []
-  if (!eps.length || eps.length !== s?.episode_count) return null
+  if (!eps.length || eps.length !== count) return null
   if (eps.some((e) => !e.runtime || !e.air_date || e.air_date > today)) return null
   return eps.reduce((sum, e) => sum + e.runtime!, 0)
 }
@@ -167,7 +170,7 @@ async function show(id: number, today: string): Promise<TmdbItem> {
       number: s.season_number,
       episodeCount: s.episode_count ?? null,
       airDate: dateOrNull(s.air_date),
-      runtime: seasonRuntime(withEpisodes[`season/${s.season_number}`], today),
+      runtime: seasonRuntime(withEpisodes[`season/${s.season_number}`], s.episode_count, today),
     })),
   }
 }
