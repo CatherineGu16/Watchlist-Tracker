@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Catalog, Season, Title } from '../src/lib/types.ts'
-import { classify, findTitle, normalizeName, planUpdates, summarize, type TmdbItem } from './tmdb-lib.ts'
+import { assignIds, classify, findTitle, normalizeName, pickSearchResult, planUpdates, summarize, type TmdbItem } from './tmdb-lib.ts'
 
 const title = (t: Partial<Title> & Pick<Title, 'id' | 'title'>): Title => ({
   type: 'movie',
@@ -157,14 +157,113 @@ describe('planUpdates', () => {
     expect(CATALOG.titles).toHaveLength(4)
   })
 
-  it('reports nothing when the catalog already has everything', () => {
+  it('reports nothing when the catalog already has everything, but notes the TMDB id it matched', () => {
     const { catalog, changes } = planUpdates(CATALOG, [marvel({ id: 16, name: 'Thunderbolts*', date: '2025-05-02' })], NONE, TODAY)
     expect(changes).toEqual([])
-    expect(catalog).toEqual(CATALOG)
+    expect(catalog.titles[0]).toEqual({ ...CATALOG.titles[0], tmdbId: 16, tmdbType: 'movie' })
+  })
+
+  it('fills missing runtimes and synopses, refreshes them before release, then leaves them alone', () => {
+    const withDetails: Catalog = {
+      ...CATALOG,
+      titles: CATALOG.titles.map((t) => (t.id === 'thunderbolts-2025' ? { ...t, runtime: 127, overview: 'Old.' } : t)),
+    }
+    const items = [
+      marvel({ id: 20, name: 'Thunderbolts*', date: '2025-05-02', runtime: 130, overview: 'New.' }),
+      marvel({ id: 21, name: 'Avengers: Doomsday', date: '2026-12-18', runtime: 160, overview: 'Doom arrives.' }),
+    ]
+    const { catalog, changes } = planUpdates(withDetails, items, NONE, TODAY)
+    expect(catalog.titles.find((t) => t.id === 'thunderbolts-2025')).toMatchObject({ runtime: 127, overview: 'Old.' })
+    expect(catalog.titles.find((t) => t.id === 'avengers-doomsday-2026')).toMatchObject({ runtime: 160, overview: 'Doom arrives.' })
+    expect(changes.map((c) => c.kind === 'details' && c.what)).toEqual(['synopsis', 'runtime'])
+
+    const later = planUpdates(catalog, [marvel({ id: 21, name: 'Avengers: Doomsday', date: '2026-12-18', runtime: 165 })], NONE, TODAY)
+    expect(later.catalog.titles.find((t) => t.id === 'avengers-doomsday-2026')?.runtime).toBe(165)
+  })
+
+  it("adds season runtimes, and doesn't re-add seasons TMDB numbers differently", () => {
+    const show = marvel({
+      id: 22,
+      kind: 'tv',
+      name: 'VisionQuest',
+      date: '2026-10-14',
+      seasons: [{ number: 1, episodeCount: 8, airDate: '2026-10-14', runtime: 400 }],
+    })
+    const { catalog, changes } = planUpdates(CATALOG, [show], NONE, TODAY)
+    expect(changes.map((c) => c.kind === 'details' && c.what)).toEqual(['season runtime'])
+    expect(catalog.seasons[0].runtime).toBe(400)
+
+    const older: Catalog = {
+      ...CATALOG,
+      seasons: [season({ titleId: 'visionquest-2026', number: 1 }), season({ titleId: 'visionquest-2026', number: 3 })],
+    }
+    const split = marvel({ ...show, seasons: [{ number: 2, episodeCount: 6, airDate: '2026-10-20' }] })
+    expect(planUpdates(older, [split], NONE, TODAY).changes).toEqual([])
+  })
+})
+
+describe('posters', () => {
+  const poster = (over: Partial<TmdbItem> = {}) => marvel({ id: 30, name: 'Thunderbolts*', date: '2025-05-02', posterPath: '/tb.jpg', ...over })
+
+  it('downloads a poster once a title is out, to a file named after the title', () => {
+    const { catalog, changes } = planUpdates(CATALOG, [poster()], NONE, TODAY)
+    expect(changes).toEqual([expect.objectContaining({ kind: 'poster', remote: '/tb.jpg' })])
+    expect(catalog.titles[0].posterPath).toBe('posters/thunderbolts-2025.jpg')
+  })
+
+  it("waits for release, and doesn't replace a poster it already has", () => {
+    expect(planUpdates(CATALOG, [marvel({ id: 31, name: 'Avengers: Doomsday', date: '2026-12-18', posterPath: '/teaser.jpg' })], NONE, TODAY).changes).toEqual([])
+    const has = planUpdates(CATALOG, [poster()], NONE, TODAY).catalog
+    expect(planUpdates(has, [poster({ posterPath: '/newer.jpg' })], NONE, TODAY).changes).toEqual([])
+  })
+
+  it('gets one with a new title that is already out', () => {
+    const { changes } = planUpdates(CATALOG, [marvel({ id: 32, name: 'Eyes of Wakanda', kind: 'tv', date: '2025-08-01', posterPath: '/ew.jpg' })], NONE, TODAY)
+    expect(changes.map((c) => c.kind)).toEqual(['title', 'poster'])
+  })
+})
+
+describe('pickSearchResult', () => {
+  const thunderbolts = CATALOG.titles[0]
+  it('takes the same name from about the same year', () => {
+    expect(pickSearchResult(thunderbolts, [{ id: 1, name: 'Thunderbolts', date: '2025-04-30' }, { id: 2, name: 'Thunderbolts*', date: '2026-01-01' }])).toBe(1)
+  })
+
+  it('takes a lone same-year result whose name contains ours, and nothing when unsure', () => {
+    expect(pickSearchResult(thunderbolts, [{ id: 3, name: "Marvel's Thunderbolts*", date: '2025-05-02' }])).toBe(3)
+    expect(
+      pickSearchResult(thunderbolts, [
+        { id: 4, name: 'Thunderbolts* Assemble', date: '2025-05-02' },
+        { id: 5, name: 'The Thunderbolts* Story', date: '2025-06-01' },
+      ]),
+    ).toBeNull()
+    expect(pickSearchResult(thunderbolts, [{ id: 6, name: 'Thunderbolts*', date: '1999-01-01' }])).toBeNull()
+  })
+})
+
+describe('assignIds', () => {
+  it('sets ids only on titles without one', () => {
+    const withId: Catalog = { ...CATALOG, titles: CATALOG.titles.map((t, i) => (i === 1 ? { ...t, tmdbId: 99, tmdbType: 'tv' } : t)) }
+    const { catalog, changes } = assignIds(withId, [
+      { titleId: 'thunderbolts-2025', tmdbType: 'movie', tmdbId: 7 },
+      { titleId: 'visionquest-2026', tmdbType: 'tv', tmdbId: 8 },
+    ])
+    expect(changes).toHaveLength(1)
+    expect(catalog.titles[0]).toMatchObject({ tmdbId: 7, tmdbType: 'movie' })
+    expect(catalog.titles[1]).toMatchObject({ tmdbId: 99 })
   })
 })
 
 describe('summarize', () => {
+  it('counts runtimes and synopses, lists matches for checking, and names titles TMDB lacks', () => {
+    const { catalog, changes: ids } = assignIds(CATALOG, [{ titleId: 'thunderbolts-2025', tmdbType: 'movie', tmdbId: 7 }])
+    const { changes } = planUpdates(catalog, [marvel({ id: 7, name: 'Thunderbolts*', date: '2025-05-02', runtime: 127, overview: 'x' })], NONE, TODAY)
+    const md = summarize([...ids, ...changes], [CATALOG.titles[3]])
+    expect(md).toContain('Added or refreshed 1 runtime, 1 synopsis')
+    expect(md).toContain('- Thunderbolts* (2025) · [TMDB](https://www.themoviedb.org/movie/7)')
+    expect(md).toContain('- Fantastic Four (2005, movie)')
+  })
+
   it('lists each change with a TMDB link and the TMDB credit', () => {
     const { changes } = planUpdates(CATALOG, [marvel({ id: 10, name: 'Shang-Chi 2', date: '2027-07-01' })], NONE, TODAY)
     const md = summarize(changes)

@@ -44,14 +44,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet; then
+          if [ -z "$(git status --porcelain)" ]; then
             echo "Catalog is up to date."
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git switch -C "$BRANCH"
-          git commit -am 'Catalog: new titles and dates from TMDB'
+          git add src/data/catalog.json public/posters
+          git commit -m 'Catalog: new titles, details and posters from TMDB'
           git push --force origin "$BRANCH"
           gh pr create --head "$BRANCH" --base main --title 'New titles from TMDB' --body-file "$RUNNER_TEMP/summary.md"
 

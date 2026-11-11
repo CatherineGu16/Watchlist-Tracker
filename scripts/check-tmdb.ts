@@ -1,17 +1,19 @@
 /**
- * Checks TMDB for Marvel movies and shows missing from the catalog. Run monthly by
- * .github/workflows/tmdb.yml, which opens a pull request with the result.
+ * Checks TMDB for Marvel movies and shows missing from the catalog, and fills in TMDB ids, runtimes,
+ * synopses, and posters (once a title is out). Run monthly by .github/workflows/tmdb.yml, which opens
+ * a pull request with the result.
  *
  *   npm run check:tmdb [-- --summary <file>]
  *
  * Needs TMDB_TOKEN (TMDB's "API Read Access Token"), from the environment or git-ignored .env.local.
- * Writes  src/data/catalog.json when anything changed, and the pull request's description to --summary.
+ * Writes  src/data/catalog.json and public/posters/ when anything changed, and the pull request's
+ *         description to --summary.
  */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Catalog, Title } from '../src/lib/types.ts'
-import { planUpdates, summarize, type IgnoreList, type TmdbItem } from './tmdb-lib.ts'
+import { assignIds, pickSearchResult, planUpdates, summarize, type Change, type IgnoreList, type TmdbItem, type TmdbSearchResult } from './tmdb-lib.ts'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const CATALOG = resolve(root, 'src/data/catalog.json')
@@ -22,8 +24,10 @@ const COMPANIES = ['Marvel Studios', 'Marvel Studios Animation', 'Marvel Televis
 const SKIP_GENRES = { movie: '99', tv: '99|10763|10764|10767' }
 /** New titles from this far back; older ones are already in the catalog. */
 const LOOKBACK_DAYS = 365
-/** Shows with a season this recent might get another. */
-const ONGOING_YEARS = 3
+/** Poster width: sharp at the size the app shows it on a 3x phone screen, about 40 KB each. */
+const POSTER_SIZE = 'w342'
+/** Requests at a time, well under TMDB's rate limit. */
+const CONCURRENCY = 8
 
 if (!process.env.TMDB_TOKEN && existsSync(resolve(root, '.env.local'))) process.loadEnvFile(resolve(root, '.env.local'))
 const token = process.env.TMDB_TOKEN
@@ -46,6 +50,20 @@ async function tmdb<T>(path: string, params: Record<string, string> = {}): Promi
   }
 }
 
+/** Runs fn over every item, a few at a time. */
+async function mapLimited<T, R>(list: T[], fn: (x: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(list.length)
+  let next = 0
+  const worker = async () => {
+    while (next < list.length) {
+      const i = next++
+      out[i] = await fn(list[i])
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, list.length) }, worker))
+  return out
+}
+
 interface Page<T> {
   results: T[]
   total_pages: number
@@ -58,15 +76,27 @@ interface MovieDetails {
   id: number
   title: string
   release_date?: string
+  runtime?: number | null
+  overview?: string
+  poster_path?: string | null
   production_companies: Company[]
   release_dates: { results: { iso_3166_1: string; release_dates: { release_date: string; type: number }[] }[] }
+}
+interface SeasonDetails {
+  season_number: number
+  episode_count?: number
+  air_date?: string | null
+  episodes?: { runtime?: number | null; air_date?: string | null }[]
 }
 interface TvDetails {
   id: number
   name: string
   first_air_date?: string
+  overview?: string
+  poster_path?: string | null
   production_companies: Company[]
-  seasons: { season_number: number; episode_count?: number; air_date?: string | null }[]
+  seasons: SeasonDetails[]
+  [appended: `season/${number}`]: SeasonDetails | undefined
 }
 
 const dateOrNull = (d?: string | null) => (d ? d : null)
@@ -97,37 +127,99 @@ function usRelease(m: MovieDetails): string | null {
 
 async function movie(id: number): Promise<TmdbItem> {
   const m = await tmdb<MovieDetails>(`/movie/${id}`, { append_to_response: 'release_dates' })
-  return { kind: 'movie', id, name: m.title, date: usRelease(m), companies: m.production_companies.map((c) => c.name) }
+  return {
+    kind: 'movie',
+    id,
+    name: m.title,
+    date: usRelease(m),
+    companies: m.production_companies.map((c) => c.name),
+    runtime: m.runtime || null,
+    overview: m.overview || null,
+    posterPath: m.poster_path || null,
+  }
 }
 
-async function show(id: number): Promise<TmdbItem> {
+/** A season's total minutes, once it has finished airing and every episode's length is listed. */
+function seasonRuntime(s: SeasonDetails | undefined, today: string): number | null {
+  const eps = s?.episodes ?? []
+  if (!eps.length || eps.length !== s?.episode_count) return null
+  if (eps.some((e) => !e.runtime || !e.air_date || e.air_date > today)) return null
+  return eps.reduce((sum, e) => sum + e.runtime!, 0)
+}
+
+async function show(id: number, today: string): Promise<TmdbItem> {
   const t = await tmdb<TvDetails>(`/tv/${id}`)
+  // Episode lengths come with each season; TMDB appends up to 20 to one request.
+  const numbers = t.seasons.map((s) => s.season_number).filter((n) => n > 0)
+  const withEpisodes: Partial<TvDetails> = {}
+  for (let i = 0; i < numbers.length; i += 20) {
+    Object.assign(withEpisodes, await tmdb<TvDetails>(`/tv/${id}`, { append_to_response: numbers.slice(i, i + 20).map((n) => `season/${n}`).join(',') }))
+  }
   return {
     kind: 'tv',
     id,
     name: t.name,
     date: dateOrNull(t.first_air_date),
     companies: t.production_companies.map((c) => c.name),
-    seasons: t.seasons.map((s) => ({ number: s.season_number, episodeCount: s.episode_count ?? null, airDate: dateOrNull(s.air_date) })),
+    overview: t.overview || null,
+    posterPath: t.poster_path || null,
+    seasons: t.seasons.map((s) => ({
+      number: s.season_number,
+      episodeCount: s.episode_count ?? null,
+      airDate: dateOrNull(s.air_date),
+      runtime: seasonRuntime(withEpisodes[`season/${s.season_number}`], today),
+    })),
   }
 }
 
-/** TMDB's id for a catalog show, found by name and first-air year. */
-async function findShow(title: Title): Promise<number | null> {
-  if (title.tmdbId) return title.tmdbId
-  const params: Record<string, string> = { query: title.title }
-  if (title.releaseDate) params.first_air_date_year = title.releaseDate.slice(0, 4)
-  const res = await tmdb<Page<{ id: number; name: string }>>('/search/tv', params)
-  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '')
-  return res.results.find((r) => norm(r.name) === norm(title.title))?.id ?? null
+/** Looks a catalog title up by name and year: movies and specials as movies first, shows and specials as shows. */
+async function searchFor(title: Title): Promise<{ titleId: string; tmdbType: 'movie' | 'tv'; tmdbId: number } | null> {
+  const y = title.releaseDate?.slice(0, 4)
+  const kinds: ('movie' | 'tv')[] = title.type === 'movie' ? ['movie'] : title.type === 'series' ? ['tv'] : ['movie', 'tv']
+  for (const kind of kinds) {
+    const params: Record<string, string> = { query: title.title }
+    if (y) params[kind === 'movie' ? 'primary_release_year' : 'first_air_date_year'] = y
+    let res = await tmdb<Page<{ id: number; title?: string; name?: string; release_date?: string; first_air_date?: string }>>(`/search/${kind}`, params)
+    // Release years differ by a year now and then (festival premieres, late US releases).
+    if (!res.results.length && y) res = await tmdb(`/search/${kind}`, { query: title.title })
+    const results: TmdbSearchResult[] = res.results.map((r) => ({ id: r.id, name: r.title ?? r.name ?? '', date: dateOrNull(r.release_date ?? r.first_air_date) }))
+    const id = pickSearchResult(title, results)
+    if (id) return { titleId: title.id, tmdbType: kind, tmdbId: id }
+  }
+  return null
 }
 
-const catalog = JSON.parse(readFileSync(CATALOG, 'utf8')) as Catalog
+const describe = (c: Change) => {
+  switch (c.kind) {
+    case 'title':
+      return `new: ${c.title.title}`
+    case 'season':
+      return `new: ${c.title.title} ${c.season.label}`
+    case 'update':
+      return `${c.what}: ${c.from} → ${c.to}`
+    case 'id':
+      return `matched: ${c.title.title} → ${c.tmdbType}/${c.tmdbId}`
+    case 'details':
+      return `${c.what}: ${c.title.title}`
+    case 'poster':
+      return `poster: ${c.title.title}`
+  }
+}
+
+const original = JSON.parse(readFileSync(CATALOG, 'utf8')) as Catalog
 const { _comment, ...ignore } = JSON.parse(readFileSync(resolve(root, 'scripts/tmdb-ignore.json'), 'utf8')) as IgnoreList & { _comment?: string }
 const now = new Date()
 const today = isoDay(now)
 const since = isoDay(new Date(now.getTime() - LOOKBACK_DAYS * 86_400_000))
 
+// 1. Catalog titles without a TMDB id: find them by name and year.
+const missing = original.titles.filter((t) => !t.tmdbId)
+const found = (await mapLimited(missing, searchFor)).filter((f) => f !== null)
+const { catalog, changes: idChanges } = assignIds(original, found)
+const unmatched = catalog.titles.filter((t) => !t.tmdbId)
+console.log(`Matched ${found.length} of ${missing.length} titles without a TMDB id`)
+
+// 2. New releases from Marvel's studios.
 const companyIds: number[] = []
 for (const name of COMPANIES) {
   const res = await tmdb<Page<Company>>('/search/company', { query: name })
@@ -136,41 +228,56 @@ for (const name of COMPANIES) {
   companyIds.push(...exact.map((c) => c.id))
 }
 const withCompanies = companyIds.join('|')
-
-const movies = await allPages<{ id: number }>('/discover/movie', {
+const newMovies = await allPages<{ id: number }>('/discover/movie', {
   with_companies: withCompanies,
   'primary_release_date.gte': since,
   without_genres: SKIP_GENRES.movie,
   sort_by: 'primary_release_date.asc',
 })
-const shows = await allPages<{ id: number }>('/discover/tv', {
+const newShows = await allPages<{ id: number }>('/discover/tv', {
   with_companies: withCompanies,
   'first_air_date.gte': since,
   without_genres: SKIP_GENRES.tv,
   sort_by: 'first_air_date.asc',
 })
 
-// Shows already in the catalog that may have new seasons: any with a season in the last few years or still undated.
-const recent = String(now.getFullYear() - ONGOING_YEARS)
-const ongoing = catalog.titles.filter((t) => {
-  if (t.type !== 'series') return false
-  const dates = [t.releaseDate, ...catalog.seasons.filter((s) => s.titleId === t.id).map((s) => s.premiereDate)]
-  return dates.some((d) => d === null || d >= recent)
-})
-const ongoingIds = (await Promise.all(ongoing.map(findShow))).filter((id): id is number => id !== null)
-
+// 3. Details for everything: catalog titles (runtimes, synopses, new seasons, dates) and the new releases.
+const ignored = (kind: 'movie' | 'tv', id: number) => ignore[kind].includes(id)
+const movieIds = new Set([...catalog.titles.filter((t) => t.tmdbType === 'movie').map((t) => t.tmdbId!), ...newMovies.map((m) => m.id)])
+const showIds = new Set([...catalog.titles.filter((t) => t.tmdbType === 'tv').map((t) => t.tmdbId!), ...newShows.map((s) => s.id)])
 const items: TmdbItem[] = [
-  ...(await Promise.all(movies.map((m) => movie(m.id)))),
-  ...(await Promise.all([...new Set([...shows.map((s) => s.id), ...ongoingIds])].map(show))),
+  ...(await mapLimited([...movieIds].filter((id) => !ignored('movie', id)), movie)),
+  ...(await mapLimited([...showIds].filter((id) => !ignored('tv', id)), (id) => show(id, today))),
 ]
-console.log(`TMDB: ${movies.length} movies and ${shows.length} new shows since ${since}, ${ongoingIds.length} catalog shows checked for new seasons`)
+console.log(`TMDB: ${newMovies.length} movies and ${newShows.length} shows since ${since}; details for ${items.length} titles`)
 
-const { catalog: next, changes } = planUpdates(catalog, items, ignore, today)
-const summaryAt = process.argv.indexOf('--summary')
+const planned = planUpdates(catalog, items, ignore, today)
+let next = planned.catalog
+
+// 4. Posters for titles newly out. One that fails to download is left for next month.
+const failed = new Set<string>()
+mkdirSync(resolve(root, 'public/posters'), { recursive: true })
+await mapLimited(
+  planned.changes.filter((c) => c.kind === 'poster'),
+  async ({ title, remote }) => {
+    const res = await fetch(`https://image.tmdb.org/t/p/${POSTER_SIZE}${remote}`)
+    if (!res.ok || !res.headers.get('content-type')?.startsWith('image/jpeg')) {
+      console.warn(`warning: no poster for ${title.title} (${res.status})`)
+      failed.add(title.id)
+      return
+    }
+    writeFileSync(resolve(root, 'public', title.posterPath!), Buffer.from(await res.arrayBuffer()))
+  },
+)
+if (failed.size) next = { ...next, titles: next.titles.map((t) => (failed.has(t.id) ? { ...t, posterPath: null } : t)) }
+const updates = planned.changes.filter((c) => !(c.kind === 'poster' && failed.has(c.title.id)))
+const changes = [...idChanges, ...updates]
 if (!changes.length) {
   console.log('Catalog is up to date.')
 } else {
   writeFileSync(CATALOG, JSON.stringify({ ...next, generatedAt: now.toISOString() }, null, 2) + '\n')
-  for (const c of changes) console.log(`- ${c.kind === 'update' ? `${c.what}: ${c.from} → ${c.to}` : c.kind === 'title' ? `new: ${c.title.title}` : `new: ${c.title.title} ${c.season.label}`}`)
+  for (const c of changes) console.log(`- ${describe(c)}`)
 }
-if (summaryAt !== -1 && process.argv[summaryAt + 1]) writeFileSync(process.argv[summaryAt + 1], summarize(changes))
+if (unmatched.length) console.log(`Not found on TMDB: ${unmatched.map((t) => t.title).join(', ')}`)
+const summaryAt = process.argv.indexOf('--summary')
+if (summaryAt !== -1 && process.argv[summaryAt + 1]) writeFileSync(process.argv[summaryAt + 1], summarize(changes, unmatched))

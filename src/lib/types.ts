@@ -23,7 +23,13 @@ export interface Title {
   chronoIndex: number | null
   studio: string
   tmdbId: number | null
+  /** Whether tmdbId is a TMDB movie or show; specials can be either. */
+  tmdbType?: 'movie' | 'tv'
   posterPath: string | null
+  /** Minutes, for movies and specials. A series adds up its seasons'. From TMDB. */
+  runtime?: number | null
+  /** Short synopsis, from TMDB. */
+  overview?: string | null
   note?: string
   /** Set on titles you added yourself (stored in your private data, not the catalog). */
   custom?: boolean
@@ -40,6 +46,8 @@ export interface Season {
   episodeCount: number | null
   premiereDate: PartialDate | null
   phase: number | null
+  /** Minutes for the whole season, once TMDB knows every episode's length. */
+  runtime?: number | null
   note?: string
   custom?: boolean
   updatedAt?: string

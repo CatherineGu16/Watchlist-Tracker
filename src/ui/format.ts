@@ -50,6 +50,13 @@ export function formatCountdown(date: PartialDate, today: PartialDate): string {
 
 export const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 
+/** 149 → "2h 29m"; 45 → "45m"; 480 → "8h". */
+export function formatRuntime(minutes: number): string {
+  const h = Math.floor(minutes / 60)
+  const m = Math.round(minutes % 60)
+  return [h && `${h}h`, m && `${m}m`].filter(Boolean).join(' ') || '0m'
+}
+
 /** "just now", "5 min ago", "3 hr ago", then a date. */
 export function timeAgo(iso: string, now: Date): string {
   const mins = Math.round((now.getTime() - Date.parse(iso)) / 60_000)

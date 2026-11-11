@@ -110,9 +110,13 @@ added (below) unless they are also in the sheet or `scripts/catalog-meta.ts`.
 ### New releases from TMDB
 
 On the 1st of each month, `.github/workflows/tmdb.yml` checks [TMDB](https://www.themoviedb.org/)
-for Marvel movies and shows from the past year or coming up, new seasons of recent shows, and new
-dates for anything not out yet. It opens a pull request editing `src/data/catalog.json`, listing what
-it guessed (MCU or Other, phase, story order) for you to check before merging. To turn a suggestion
+for Marvel movies and shows from the past year or coming up, new seasons of shows in the catalog, and
+new dates for anything not out yet. It also fills in each title's TMDB id (found by name and year),
+runtime and synopsis, shown in the title's panel. Posters are downloaded to `public/posters/` once a
+title is out (studios keep changing them until release) and never replaced after that; delete a
+poster file and clear its `posterPath` to fetch a fresh one. It opens a pull request editing
+`src/data/catalog.json`, listing what it guessed (MCU or Other, phase, story order, TMDB matches) for
+you to check before merging. To turn a suggestion
 down for good, add its TMDB id to `scripts/tmdb-ignore.json`. Run it any time from the Actions tab
 (**Check TMDB for new titles → Run workflow**).
 

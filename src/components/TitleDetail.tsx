@@ -4,7 +4,7 @@ import { todayIso } from '../lib/partialDate.ts'
 import type { SeasonInput } from '../lib/customTitles.ts'
 import { compareWatches, isFinished, isReleased, seasonStatus } from '../lib/status.ts'
 import type { Season } from '../lib/types.ts'
-import { formatCountdown, formatDate, formatWatch, plural } from '../ui/format.ts'
+import { formatCountdown, formatDate, formatRuntime, formatWatch, plural } from '../ui/format.ts'
 import { sagaColor } from '../ui/sagas.ts'
 import type { useActions } from '../ui/useActions.ts'
 import { MoreMenu, type MenuItem } from './MoreMenu.tsx'
@@ -112,16 +112,50 @@ function DetailBody({
         ]
       : []),
   ]
-  return view.title.type === 'series' ? (
-    <SeriesBody
-      view={view}
-      actions={actions}
-      extraItems={titleItems}
-      onHistory={(seasonId) => setSub({ kind: 'history', seasonId })}
-      onEditSeason={(seasonId) => setSub({ kind: 'season', seasonId })}
-    />
-  ) : (
-    <MovieBody view={view} actions={actions} extraItems={titleItems} onHistory={() => setSub({ kind: 'history', seasonId: null })} />
+  return (
+    <>
+      {(view.title.posterPath || view.title.overview) && (
+        <div className="mt-1 mb-3 flex items-start gap-3">
+          {view.title.posterPath && (
+            <img
+              src={`${import.meta.env.BASE_URL}${view.title.posterPath}`}
+              alt=""
+              width={342}
+              height={513}
+              className="aspect-[2/3] w-24 shrink-0 rounded-lg bg-raised object-cover"
+            />
+          )}
+          {view.title.overview && <Synopsis text={view.title.overview} />}
+        </div>
+      )}
+      {view.title.type === 'series' ? (
+        <SeriesBody
+          view={view}
+          actions={actions}
+          extraItems={titleItems}
+          onHistory={(seasonId) => setSub({ kind: 'history', seasonId })}
+          onEditSeason={(seasonId) => setSub({ kind: 'season', seasonId })}
+        />
+      ) : (
+        <MovieBody view={view} actions={actions} extraItems={titleItems} onHistory={() => setSub({ kind: 'history', seasonId: null })} />
+      )}
+    </>
+  )
+}
+
+/** TMDB's synopsis, five lines (about a poster's height) until you ask for the rest. */
+function Synopsis({ text }: { text: string }) {
+  const [open, setOpen] = useState(false)
+  const long = text.length > 220
+  return (
+    <div className="min-w-0 text-sm">
+      <p className={open || !long ? '' : 'line-clamp-5'}>{text}</p>
+      {long && (
+        <button onClick={() => setOpen(!open)} aria-expanded={open} className="-ml-1 mt-0.5 min-h-8 rounded px-1 font-bold text-muted hover:text-fg">
+          {open ? 'Less' : 'More'}
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -169,10 +203,18 @@ function SeasonEditor({ view, season, actions, onDone }: { view: TitleView; seas
   )
 }
 
+/** A movie's length, or a show's once every season's is known. */
+function runtimeOf(view: TitleView): number | null {
+  if (view.title.type !== 'series') return view.title.runtime ?? null
+  const seasons = view.seasons
+  return seasons.length && seasons.every((s) => s.runtime) ? seasons.reduce((sum, s) => sum + s.runtime!, 0) : null
+}
+
 function Facts({ view }: { view: TitleView }) {
   const { title } = view
   const today = todayIso()
   const upcoming = title.releaseDate && !isReleased(title.releaseDate, today)
+  const runtime = runtimeOf(view)
   return (
     <>
       <p className="flex flex-wrap gap-x-3">
@@ -187,6 +229,7 @@ function Facts({ view }: { view: TitleView }) {
             : `${title.type === 'series' ? 'Premiered' : 'Released'} ${formatDate(title.releaseDate)}`
           : 'Release date to be announced'}
         {title.note && <span> ({title.note})</span>}
+        {runtime && <span> · {title.type === 'series' ? `${formatRuntime(runtime)} in all` : formatRuntime(runtime)}</span>}
       </p>
       {title.custom && <p className="mt-0.5">Added by you</p>}
     </>

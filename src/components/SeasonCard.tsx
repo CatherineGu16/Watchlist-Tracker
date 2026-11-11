@@ -2,7 +2,7 @@ import type { TitleView } from '../lib/catalogView.ts'
 import { todayIso } from '../lib/partialDate.ts'
 import { compareWatches, isFinished, isOpen, seasonStatus } from '../lib/status.ts'
 import type { Season } from '../lib/types.ts'
-import { formatCountdown, formatDate, formatWatch, plural } from '../ui/format.ts'
+import { formatCountdown, formatDate, formatRuntime, formatWatch, plural } from '../ui/format.ts'
 import type { useActions } from '../ui/useActions.ts'
 import { MoreMenu, type MenuItem } from './MoreMenu.tsx'
 
@@ -57,6 +57,7 @@ export function SeasonCard({
       </div>
       <p className="flex flex-wrap gap-x-3 text-sm text-muted">
         {season.episodeCount !== null && <span>{plural(season.episodeCount, 'episode')}</span>}
+        {season.runtime && <span>{formatRuntime(season.runtime)}</span>}
         {season.premiereDate ? (
           <span>{status === 'upcoming' ? formatCountdown(season.premiereDate, today) : `Premiered ${formatDate(season.premiereDate)}`}</span>
         ) : (

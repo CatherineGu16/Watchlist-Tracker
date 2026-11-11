@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { daysUntil, formatCountdown, formatDate, formatRange, formatWatch } from './format.ts'
+import { daysUntil, formatCountdown, formatDate, formatRange, formatRuntime, formatWatch } from './format.ts'
 
 describe('formatDate', () => {
   it('shows only as much precision as the date has', () => {
@@ -36,5 +36,13 @@ describe('countdowns', () => {
     expect(formatCountdown('2026-11-01', '2026-10-16')).toBe('Out in 16 days')
     expect(formatCountdown('2026-12-18', '2026-10-16')).toBe('Out Dec 18, 2026')
     expect(formatCountdown('2027-03', '2026-10-16')).toBe('Coming Mar 2027')
+  })
+})
+
+describe('formatRuntime', () => {
+  it('shows hours and minutes, leaving out a zero part', () => {
+    expect(formatRuntime(149)).toBe('2h 29m')
+    expect(formatRuntime(45)).toBe('45m')
+    expect(formatRuntime(480)).toBe('8h')
   })
 })
