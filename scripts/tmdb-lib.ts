@@ -190,8 +190,9 @@ function withDetails(title: Title, item: TmdbItem, today: string, changes: Chang
 }
 
 /**
- * Compares what TMDB knows with the catalog: titles missing from it, seasons added after the ones
- * it has, dates or episode counts for things not out yet, and missing runtimes and synopses.
+ * Compares what TMDB knows with the catalog: titles and seasons out now but missing from it (seasons
+ * only after the ones it has), dates or episode counts for catalog entries not out yet, and missing
+ * runtimes and synopses.
  * Released titles' dates are left alone, so the catalog's own facts win once something is out.
  * Returns the updated catalog and what changed.
  */
@@ -208,6 +209,8 @@ export function planUpdates(catalog: Catalog, items: TmdbItem[], ignore: IgnoreL
 
     let title = findTitle(titles, item)
     if (!title) {
+      // Only titles that are out: upcoming ones change names, dates and plans too often to add ahead of time.
+      if (unreleased(item.date, today)) continue
       const { guessed, ...meta } = classify(item, titles)
       let id = titleId(item.name, item.date)
       for (let n = 2; titles.some((t) => t.id === id); n++) id = `${titleId(item.name, item.date)}-${n}`
@@ -250,7 +253,7 @@ export function planUpdates(catalog: Catalog, items: TmdbItem[], ignore: IgnoreL
       if (s.number < 1) continue
       const i = seasons.findIndex((x) => x.titleId === title.id && x.number === s.number)
       if (i === -1) {
-        if (s.number <= last) continue
+        if (s.number <= last || unreleased(s.airDate, today)) continue
         const season = makeSeason(title, s, titles, today)
         seasons.push(season)
         changes.push({ kind: 'season', item, title, season })
@@ -289,7 +292,7 @@ export function summarize(changes: Change[], unmatched: Title[] = []): string {
   const ids = pick('id')
   const details = pick('details')
   const posters = pick('poster')
-  const lines = ['Monthly check of TMDB for Marvel movies and shows released in the past year or coming up.', '']
+  const lines = ['Monthly check of TMDB for Marvel movies and shows released in the past year.', '']
   if (titles.length) {
     lines.push('### New titles', '')
     for (const { item, title, guessed } of titles) {

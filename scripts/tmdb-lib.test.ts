@@ -77,9 +77,18 @@ describe('classify', () => {
 
 describe('planUpdates', () => {
   it('adds a missing title with its TMDB id', () => {
-    const { catalog, changes } = planUpdates(CATALOG, [marvel({ id: 10, name: 'Shang-Chi 2', date: '2027-07-01' })], NONE, TODAY)
+    const { catalog, changes } = planUpdates(CATALOG, [marvel({ id: 10, name: 'Shang-Chi 2', date: '2026-07-01' })], NONE, TODAY)
     expect(changes.map((c) => c.kind)).toEqual(['title'])
-    expect(catalog.titles.at(-1)).toMatchObject({ id: 'shang-chi-2-2027', title: 'Shang-Chi 2', type: 'movie', tmdbId: 10, universe: 'mcu' })
+    expect(catalog.titles.at(-1)).toMatchObject({ id: 'shang-chi-2-2026', title: 'Shang-Chi 2', type: 'movie', tmdbId: 10, universe: 'mcu' })
+  })
+
+  it("doesn't add titles or seasons that aren't out yet", () => {
+    const items = [
+      marvel({ id: 40, name: 'Black Panther 3', date: '2028-12-13' }),
+      marvel({ id: 41, name: 'Untitled Marvel Film' }),
+      marvel({ id: 42, kind: 'tv', name: 'VisionQuest', date: '2026-10-14', seasons: [{ number: 2, episodeCount: null, airDate: '2028-01-05' }] }),
+    ]
+    expect(planUpdates(CATALOG, items, NONE, TODAY).changes).toEqual([])
   })
 
   it('adds new shows with their seasons, skipping specials (season 0)', () => {
@@ -87,16 +96,15 @@ describe('planUpdates', () => {
       id: 11,
       kind: 'tv',
       name: 'Wonder Woman',
-      date: '2027-03-01',
+      date: '2026-09-01',
       seasons: [
         { number: 0, episodeCount: 2, airDate: null },
-        { number: 1, episodeCount: 8, airDate: '2027-03-01' },
+        { number: 1, episodeCount: 8, airDate: '2026-09-01' },
       ],
     })
     const { catalog, changes } = planUpdates(CATALOG, [show], NONE, TODAY)
     expect(changes.map((c) => c.kind)).toEqual(['title', 'season'])
-    // TMDB lists only some episodes of a season that hasn't started, so the count waits.
-    expect(catalog.seasons.at(-1)).toMatchObject({ id: 'wonder-woman-2027-s1', titleId: 'wonder-woman-2027', episodeCount: null, premiereDate: '2027-03-01' })
+    expect(catalog.seasons.at(-1)).toMatchObject({ id: 'wonder-woman-2026-s1', titleId: 'wonder-woman-2026', episodeCount: 8, premiereDate: '2026-09-01' })
   })
 
   it('takes episode counts only once a season has started', () => {
@@ -115,7 +123,10 @@ describe('planUpdates', () => {
   })
 
   it('follows a title TMDB renamed, by its TMDB id', () => {
-    const added = planUpdates(CATALOG, [marvel({ id: 18, name: 'Untitled X-Men Film', date: '2028-05-04' })], NONE, TODAY).catalog
+    const added: Catalog = {
+      ...CATALOG,
+      titles: [...CATALOG.titles, title({ id: 'untitled-x-men-film-2028', title: 'Untitled X-Men Film', releaseDate: '2028-05-04', tmdbId: 18, tmdbType: 'movie' })],
+    }
     const { catalog, changes } = planUpdates(added, [marvel({ id: 18, name: 'X-Men: First Class Act', date: '2028-05-05' })], NONE, TODAY)
     expect(changes.map((c) => c.kind === 'update' && c.what)).toEqual(['Untitled X-Men Film: title', 'Untitled X-Men Film: release date'])
     expect(catalog.titles.at(-1)).toMatchObject({ id: 'untitled-x-men-film-2028', title: 'X-Men: First Class Act', releaseDate: '2028-05-05' })
@@ -130,12 +141,12 @@ describe('planUpdates', () => {
       date: '2026-10-14',
       seasons: [
         { number: 1, episodeCount: 8, airDate: '2026-10-14' },
-        { number: 2, episodeCount: null, airDate: '2028-01-05' },
+        { number: 2, episodeCount: 4, airDate: '2026-11-01' },
       ],
     })
     const { catalog, changes } = planUpdates(CATALOG, [show], NONE, TODAY)
     expect(changes.map((c) => c.kind)).toEqual(['season'])
-    expect(catalog.seasons.at(-1)).toMatchObject({ id: 'visionquest-2026-s2', number: 2, episodeCount: null, premiereDate: '2028-01-05' })
+    expect(catalog.seasons.at(-1)).toMatchObject({ id: 'visionquest-2026-s2', number: 2, episodeCount: 4, premiereDate: '2026-11-01' })
   })
 
   it("updates dates only for what isn't out yet, and keeps the title's id", () => {
@@ -151,7 +162,7 @@ describe('planUpdates', () => {
   })
 
   it('skips ignored ids and duplicates, and leaves the input catalog untouched', () => {
-    const item = marvel({ id: 15, name: 'Marvel Zombies 2', date: '2027-09-01' })
+    const item = marvel({ id: 15, name: 'Marvel Zombies 2', date: '2026-09-01' })
     expect(planUpdates(CATALOG, [item], { movie: [15], tv: [] }, TODAY).changes).toEqual([])
     expect(planUpdates(CATALOG, [item, item], NONE, TODAY).changes).toHaveLength(1)
     expect(CATALOG.titles).toHaveLength(4)
@@ -265,9 +276,9 @@ describe('summarize', () => {
   })
 
   it('lists each change with a TMDB link and the TMDB credit', () => {
-    const { changes } = planUpdates(CATALOG, [marvel({ id: 10, name: 'Shang-Chi 2', date: '2027-07-01' })], NONE, TODAY)
+    const { changes } = planUpdates(CATALOG, [marvel({ id: 10, name: 'Shang-Chi 2', date: '2026-07-01' })], NONE, TODAY)
     const md = summarize(changes)
-    expect(md).toContain('**Shang-Chi 2** (movie, 2027-07-01)')
+    expect(md).toContain('**Shang-Chi 2** (movie, 2026-07-01)')
     expect(md).toContain('https://www.themoviedb.org/movie/10')
     expect(md).toContain('not endorsed, certified, or otherwise approved by TMDB')
   })

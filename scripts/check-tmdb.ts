@@ -231,12 +231,14 @@ const withCompanies = companyIds.join('|')
 const newMovies = await allPages<{ id: number }>('/discover/movie', {
   with_companies: withCompanies,
   'primary_release_date.gte': since,
+  'primary_release_date.lte': today,
   without_genres: SKIP_GENRES.movie,
   sort_by: 'primary_release_date.asc',
 })
 const newShows = await allPages<{ id: number }>('/discover/tv', {
   with_companies: withCompanies,
   'first_air_date.gte': since,
+  'first_air_date.lte': today,
   without_genres: SKIP_GENRES.tv,
   sort_by: 'first_air_date.asc',
 })
