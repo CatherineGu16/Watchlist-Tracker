@@ -62,7 +62,7 @@ export default defineConfig({
       },
       workbox: {
         // App shell, fonts and icons are cached so the app opens offline.
-        globPatterns: ['**/*.{js,css,html,woff2,png,svg,ico,jpg}'],
+        globPatterns: ['**/*.{js,css,html,woff2,png,svg,ico,jpg,webp}'],
         navigateFallback: `${BASE}index.html`,
         cleanupOutdatedCaches: true,
       },

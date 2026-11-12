@@ -260,21 +260,27 @@ const planned = planUpdates(catalog, items, ignore, today)
 let next = planned.catalog
 
 // 4. Posters for titles newly out. One that fails to download is left for next month.
-const failed = new Set<string>()
+// TMDB serves some posters as WebP or PNG whatever their name says, so the file takes the type it arrives as.
+const EXTENSION: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
+const saved = new Map<string, string | null>()
 mkdirSync(resolve(root, 'public/posters'), { recursive: true })
 await mapLimited(
   planned.changes.filter((c) => c.kind === 'poster'),
   async ({ title, remote }) => {
     const res = await fetch(`https://image.tmdb.org/t/p/${POSTER_SIZE}${remote}`)
-    if (!res.ok || !res.headers.get('content-type')?.startsWith('image/jpeg')) {
-      console.warn(`warning: no poster for ${title.title} (${res.status})`)
-      failed.add(title.id)
+    const ext = EXTENSION[res.headers.get('content-type')?.split(';')[0] ?? '']
+    if (!res.ok || !ext) {
+      console.warn(`warning: no poster for ${title.title} (${res.status} ${res.headers.get('content-type')})`)
+      saved.set(title.id, null)
       return
     }
-    writeFileSync(resolve(root, 'public', title.posterPath!), Buffer.from(await res.arrayBuffer()))
+    const file = title.posterPath!.replace(/\.jpg$/, `.${ext}`)
+    writeFileSync(resolve(root, 'public', file), Buffer.from(await res.arrayBuffer()))
+    saved.set(title.id, file)
   },
 )
-if (failed.size) next = { ...next, titles: next.titles.map((t) => (failed.has(t.id) ? { ...t, posterPath: null } : t)) }
+next = { ...next, titles: next.titles.map((t) => (saved.has(t.id) ? { ...t, posterPath: saved.get(t.id)! } : t)) }
+const failed = new Set([...saved].filter(([, file]) => file === null).map(([id]) => id))
 const updates = planned.changes.filter((c) => !(c.kind === 'poster' && failed.has(c.title.id)))
 const changes = [...idChanges, ...updates]
 if (!changes.length) {
