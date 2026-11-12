@@ -11,8 +11,8 @@ const UNIVERSES: { id: Universe; label: string }[] = [
 ]
 
 /**
- * Top of Browse: MCU / Other Marvel tabs and progress. The bar is the whole universe at a glance:
- * one segment per saga, sized by its share of titles, filled by how much of it you've watched.
+ * Top of Browse: MCU / Other Marvel tabs and progress, one ring per saga filled by how much of it
+ * you've watched, with the count inside.
  */
 export function BrowseHeader({
   views,
@@ -56,30 +56,17 @@ export function BrowseHeader({
         })}
       </div>
 
-      <div className="mt-3 flex h-2.5 gap-0.5" role="img" aria-label={`${watched} of ${mine.length} watched`}>
+      {/* Rings share the row, and scroll sideways if there are more sagas than fit. */}
+      <ul className="-mx-3 mt-3 flex gap-2 overflow-x-auto px-3 sm:-mx-4 sm:px-4" aria-label={`${watched} of ${mine.length} watched`}>
         {sagas.map((saga) => {
           const items = mine.filter((v) => v.title.saga === saga)
           const done = items.filter((v) => v.summary.status === 'watched').length
           return (
-            <span
-              key={saga}
-              title={`${saga}: ${done} of ${items.length}`}
-              className="overflow-hidden rounded-sm bg-line first:rounded-l-full last:rounded-r-full"
-              style={{ flexGrow: items.length }}
-            >
-              <span className="block h-full transition-[width] duration-500" style={{ width: `${(done / items.length) * 100}%`, background: sagaColor(saga) }} />
-            </span>
-          )
-        })}
-      </div>
-      <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.8125rem] text-muted">
-        {sagas.map((saga) => {
-          const items = mine.filter((v) => v.title.saga === saga)
-          const done = items.filter((v) => v.summary.status === 'watched').length
-          return (
-            <li key={saga} className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full" style={{ background: sagaColor(saga) }} aria-hidden="true" />
-              {saga} <span className="tabular-nums">{done}/{items.length}</span>
+            <li key={saga} className="flex max-w-[5.25rem] min-w-[3.75rem] flex-1 flex-col items-center gap-1" aria-label={`${saga}: ${done} of ${items.length} watched`}>
+              <Ring done={done} total={items.length} color={sagaColor(saga)} />
+              <span className="line-clamp-2 text-center text-xs leading-tight text-muted" aria-hidden="true">
+                {saga}
+              </span>
             </li>
           )
         })}
@@ -104,3 +91,34 @@ export function BrowseHeader({
 }
 
 const lowerFirst = (s: string) => s[0].toLowerCase() + s.slice(1)
+
+/** A progress ring with "done/total" in the middle. */
+function Ring({ done, total, color }: { done: number; total: number; color: string }) {
+  const r = 24
+  const length = 2 * Math.PI * r
+  return (
+    <span className="relative grid size-14 place-items-center" aria-hidden="true">
+      <svg viewBox="0 0 56 56" className="absolute inset-0 -rotate-90">
+        <circle cx="28" cy="28" r={r} fill="none" stroke="var(--line)" strokeWidth="4" />
+        <circle
+          cx="28"
+          cy="28"
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray={length}
+          strokeDashoffset={length * (1 - (total ? done / total : 0))}
+          className="transition-[stroke-dashoffset] duration-500"
+          // A round cap would show a dot at zero.
+          style={done === 0 ? { display: 'none' } : undefined}
+        />
+      </svg>
+      <span className="text-[0.8125rem] font-bold tabular-nums">
+        {done}
+        <span className="font-normal text-muted">/{total}</span>
+      </span>
+    </span>
+  )
+}
