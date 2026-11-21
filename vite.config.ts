@@ -42,7 +42,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false,
-      includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'icon.svg'],
+      // The app icons are already in the offline cache through workbox.globPatterns.
+      includeManifestIcons: false,
       manifest: {
         name: 'Marvel Watchlist',
         short_name: 'Watchlist',
@@ -62,12 +63,37 @@ export default defineConfig({
       },
       workbox: {
         // App shell, fonts and icons are cached so the app opens offline.
-        globPatterns: ['**/*.{js,css,html,woff2,png,svg,ico,jpg,webp}'],
+        globPatterns: ['**/*.{js,css,html,woff2,png,svg,ico}'],
+        // Posters stay out of that list: an update downloads everything in it before taking over, and
+        // an iPhone pauses the home screen app long before 100+ posters arrive, so it never updated.
+        // Each poster is cached instead the first time it's shown, and kept (they never change).
+        globIgnores: ['posters/**'],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith(`${BASE}posters/`),
+            handler: 'CacheFirst',
+            options: { cacheName: 'posters', expiration: { maxEntries: 1000 } },
+          },
+        ],
+        // Only names with a content hash ("index-kFFS2eRh.js") are safe to cache by name alone;
+        // assets/catalog.js keeps its name, so its contents decide when it's downloaded again.
+        dontCacheBustURLsMatching: /-[\w-]{8}\.\w+$/,
         navigateFallback: `${BASE}index.html`,
         cleanupOutdatedCaches: true,
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // The catalog changes monthly (TMDB) and the code when it's edited; as separate files, an
+        // installed app downloads only the one that changed. The catalog's name stays fixed so the
+        // code that loads it doesn't change with it (the offline cache still notices new contents).
+        manualChunks: (id) => (id.includes('/src/data/catalog.json') ? 'catalog' : undefined),
+        chunkFileNames: (chunk) => (chunk.name === 'catalog' ? 'assets/catalog.js' : 'assets/[name]-[hash].js'),
+      },
+    },
+  },
   test: {
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
   },
