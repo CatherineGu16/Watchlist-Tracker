@@ -147,9 +147,9 @@ export function classify(item: TmdbItem, titles: Title[]): Omit<Title, 'id' | 't
     studio,
     guessed: ['Other Marvel', 'group'],
   })
-  if (has('Sony')) return other('sony-spider-man', 'Spider-Man', has('Sony Pictures Animation') ? 'Sony Pictures Animation' : 'Sony Pictures')
-  if (has('20th Century')) return other('fox-xmen', 'X-Men', '20th Century Studios')
-  return other('classic', 'Classic Marvel', item.companies.find((c) => !/^Marvel Entertainment$/i.test(c)) ?? item.companies[0] ?? 'Marvel')
+  if (has('Sony')) return other('sony-spider-man', 'Sony Spider-Man', has('Sony Pictures Animation') ? 'Sony Pictures Animation' : 'Sony Pictures')
+  if (has('20th Century')) return other('fox-xmen', 'Fox X-Men', '20th Century Studios')
+  return other('classic', 'Classic films', item.companies.find((c) => !/^Marvel Entertainment$/i.test(c)) ?? item.companies[0] ?? 'Marvel')
 }
 
 /** TMDB counts only the episodes listed so far, so a count is trusted once the season has started. */

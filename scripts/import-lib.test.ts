@@ -63,9 +63,12 @@ describe('buildFromSheet', () => {
     expect(u['agents-of-s-h-i-e-l-d-2013']).toBe('other')
     expect(u['spider-man-2002']).toBe('other')
   })
-  it('normalizes saga names and assigns phases', () => {
+  it('names groups as Marvel and Disney+ do, and assigns phases', () => {
     const t = run().catalog.titles
-    expect(t.find((x) => x.id === 'spider-man-2002')?.saga).toBe('Spider-Man')
+    expect(t.find((x) => x.id === 'spider-man-2002')?.saga).toBe('Sony Spider-Man')
+    expect(t.find((x) => x.id === 'dark-phoenix-2019')?.saga).toBe('Fox X-Men')
+    expect(t.find((x) => x.id === 'daredevil-2015')?.saga).toBe('Defenders Saga')
+    expect(t.find((x) => x.id === 'agents-of-s-h-i-e-l-d-2013')?.saga).toBe('Marvel Television')
     expect(t.find((x) => x.id === 'iron-man-2008')?.phase).toBe(1)
     expect(t.find((x) => x.id === 'werewolf-by-night-2022')?.type).toBe('special')
   })

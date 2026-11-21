@@ -1,3 +1,4 @@
+import { currentSagaName } from './sagaNames.ts'
 import { summarizeTitle, type TitleSummary } from './status.ts'
 import type { Catalog, PartialDate, PrivateData, Season, Title, Watch } from './types.ts'
 
@@ -13,7 +14,8 @@ export function buildTitleViews(catalog: Catalog, data: PrivateData, today: Part
   const placement = data.groupPlacement?.values ?? {}
   const titles = [...catalog.titles, ...data.customTitles.filter((t) => !t.deleted)].map((t) => {
     const moved = t.collection && placement[t.collection] ? { ...t, universe: placement[t.collection]! } : t
-    return data.titleOverrides[t.id] ? { ...moved, ...data.titleOverrides[t.id], id: t.id } : moved
+    const title = data.titleOverrides[t.id] ? { ...moved, ...data.titleOverrides[t.id], id: t.id } : moved
+    return title.saga === currentSagaName(title.saga) ? title : { ...title, saga: currentSagaName(title.saga) }
   })
   const seasons = [...catalog.seasons, ...data.customSeasons.filter((s) => !s.deleted)]
   const seasonsBy = groupBy(seasons, (s) => s.titleId)

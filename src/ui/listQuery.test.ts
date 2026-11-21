@@ -136,14 +136,22 @@ describe('release order, by season', () => {
 
 describe('reviveQuery', () => {
   it('restores valid saved settings but never the search', () => {
-    expect(reviveQuery({ ...DEFAULT_QUERY, universe: 'other', sort: 'release-seasons', phase: 4, sagas: ['X-Men'], search: 'loki' })).toEqual({
+    expect(reviveQuery({ ...DEFAULT_QUERY, universe: 'other', sort: 'release-seasons', phase: 4, sagas: ['Fox X-Men'], search: 'loki' })).toEqual({
       ...DEFAULT_QUERY,
       universe: 'other',
       sort: 'release-seasons',
       phase: 4,
-      sagas: ['X-Men'],
+      sagas: ['Fox X-Men'],
       search: '',
     })
+  })
+  it('reads group names saved before the Marvel and Disney+ names as their new ones', () => {
+    expect(reviveQuery({ sagas: ['X-Men', 'Spider-Man', 'Classic Marvel', 'Infinity Saga'] }).sagas).toEqual([
+      'Fox X-Men',
+      'Sony Spider-Man',
+      'Classic films',
+      'Infinity Saga',
+    ])
   })
   it('replaces anything damaged or unknown with defaults instead of failing', () => {
     expect(reviveQuery({ sort: 'bogus', universe: 'nope', type: 'x', sagas: 'notarray', status: 7, phase: '4' })).toEqual(DEFAULT_QUERY)

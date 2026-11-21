@@ -87,6 +87,8 @@ export function buildFromSheet(mainCsv: string, seriesCsv: string, now: Date, { 
         ? 'marvel-tv'
         : (COLLECTION_BY_SAGA[saga] ?? 'marvel-studios')
     const universe = collection === 'marvel-studios' || collection === 'netflix' ? 'mcu' : 'other'
+    // Disney+ lists the Netflix shows as the Defenders Saga; the older network shows go by who made them.
+    const group = collection === 'netflix' ? 'Defenders Saga' : collection === 'marvel-tv' ? 'Marvel Television' : saga
 
     const title: Title = {
       id: titleId(name, releaseDate),
@@ -95,7 +97,7 @@ export function buildFromSheet(mainCsv: string, seriesCsv: string, now: Date, { 
       releaseDate,
       universe,
       collection,
-      saga,
+      saga: group,
       phase: universe === 'mcu' ? (MCU_PHASE[name] ?? null) : null,
       chronoIndex: null,
       studio: STUDIO_BY_SAGA[saga] ?? (collection === 'marvel-studios' ? 'Marvel Studios' : 'Marvel Television'),

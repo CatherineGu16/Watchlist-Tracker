@@ -65,7 +65,8 @@ export function BrowseHeader({
             <li key={saga} className="flex max-w-[5.25rem] min-w-[3.75rem] flex-1 flex-col items-center gap-1" aria-label={`${saga}: ${done} of ${items.length} watched`}>
               <Ring done={done} total={items.length} color={sagaColor(saga)} />
               <span className="line-clamp-2 text-center text-xs leading-tight text-muted" aria-hidden="true">
-                {saga}
+                {/* Wrap between words, never at the hyphen in "Spider-Man". */}
+                {saga.replace(/-/g, '\u2011')}
               </span>
             </li>
           )

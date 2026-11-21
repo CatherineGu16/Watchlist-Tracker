@@ -220,7 +220,7 @@ function Facts({ view }: { view: TitleView }) {
       <p className="flex flex-wrap gap-x-3">
         <span>{title.saga}</span>
         {title.phase !== null && <span>Phase {title.phase}</span>}
-        <span>{title.studio}</span>
+        {title.studio !== title.saga && <span>{title.studio}</span>}
       </p>
       <p className="mt-0.5">
         {title.releaseDate

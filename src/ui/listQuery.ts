@@ -2,6 +2,7 @@ import type { TitleView } from '../lib/catalogView.ts'
 import { comparePartialDates } from '../lib/partialDate.ts'
 import { compareWatches, isFinished, seasonStatus, type ItemStatus } from '../lib/status.ts'
 import type { PartialDate, Season, TitleType, Universe } from '../lib/types.ts'
+import { currentSagaName } from '../lib/sagaNames.ts'
 import { sagaRank } from './sagas.ts'
 
 /** "release-seasons" lists each season of a show on its own, by premiere date. */
@@ -91,7 +92,7 @@ export function reviveQuery(saved: unknown): ListQuery {
   return {
     universe: pick(s.universe, ['mcu', 'other'] as const, DEFAULT_QUERY.universe),
     type: pick(s.type, TYPES, DEFAULT_QUERY.type),
-    sagas: Array.isArray(s.sagas) ? s.sagas.filter((x): x is string => typeof x === 'string') : [],
+    sagas: Array.isArray(s.sagas) ? s.sagas.filter((x): x is string => typeof x === 'string').map(currentSagaName) : [],
     phase: typeof s.phase === 'number' && Number.isInteger(s.phase) ? s.phase : null,
     status: pick(s.status, STATUSES, DEFAULT_QUERY.status),
     search: '',

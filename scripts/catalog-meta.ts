@@ -15,21 +15,21 @@ export const LEGACY_MARVEL_TV = new Set(['Agents of S.H.I.E.L.D.', 'Agent Carter
 
 /** Sheet sagas outside Marvel Studios, and the group each belongs to. */
 export const COLLECTION_BY_SAGA: Record<string, Collection> = {
-  'X-Men': 'fox-xmen',
-  'Spider-Man': 'sony-spider-man',
+  'Fox X-Men': 'fox-xmen',
+  'Sony Spider-Man': 'sony-spider-man',
 }
 
 /** Sheet "Phase" column values → saga names used in the app. */
 export const SAGA_NAMES: Record<string, string> = {
   'Infinity Saga': 'Infinity Saga',
   'Multiverse Saga': 'Multiverse Saga',
-  'X-Men': 'X-Men',
-  'Spider Man': 'Spider-Man',
+  'X-Men': 'Fox X-Men',
+  'Spider Man': 'Sony Spider-Man',
 }
 
 export const STUDIO_BY_SAGA: Record<string, string> = {
-  'X-Men': '20th Century Fox',
-  'Spider-Man': 'Sony Pictures',
+  'Fox X-Men': '20th Century Fox',
+  'Sony Spider-Man': 'Sony Pictures',
 }
 
 export const MCU_PHASE: Record<string, number> = {
@@ -232,34 +232,34 @@ export const EXTRA_TITLES: ExtraTitle[] = [
   { title: 'The Punisher: One Last Kill', type: 'special', releaseDate: '2026-05-12', collection: 'marvel-studios', universe: 'mcu', saga: 'Multiverse Saga', phase: 6, studio: 'Marvel Studios', note: 'Special presentation' },
 
   // Other Marvel: Sony
-  { title: 'Venom', type: 'movie', releaseDate: '2018-10-05', collection: 'sony-spider-man', universe: 'other', saga: 'Spider-Man', studio: 'Sony Pictures' },
-  { title: 'Spider-Man: Into the Spider-Verse', type: 'movie', releaseDate: '2018-12-14', collection: 'sony-spider-man', universe: 'other', saga: 'Spider-Man', studio: 'Sony Pictures Animation' },
-  { title: 'Venom: Let There Be Carnage', type: 'movie', releaseDate: '2021-10-01', collection: 'sony-spider-man', universe: 'other', saga: 'Spider-Man', studio: 'Sony Pictures' },
-  { title: 'Morbius', type: 'movie', releaseDate: '2022-04-01', collection: 'sony-spider-man', universe: 'other', saga: 'Spider-Man', studio: 'Sony Pictures' },
-  { title: 'Spider-Man: Across the Spider-Verse', type: 'movie', releaseDate: '2023-06-02', collection: 'sony-spider-man', universe: 'other', saga: 'Spider-Man', studio: 'Sony Pictures Animation' },
-  { title: 'Madame Web', type: 'movie', releaseDate: '2024-02-14', collection: 'sony-spider-man', universe: 'other', saga: 'Spider-Man', studio: 'Sony Pictures' },
-  { title: 'Venom: The Last Dance', type: 'movie', releaseDate: '2024-10-25', collection: 'sony-spider-man', universe: 'other', saga: 'Spider-Man', studio: 'Sony Pictures' },
-  { title: 'Kraven the Hunter', type: 'movie', releaseDate: '2024-12-13', collection: 'sony-spider-man', universe: 'other', saga: 'Spider-Man', studio: 'Sony Pictures' },
+  { title: 'Venom', type: 'movie', releaseDate: '2018-10-05', collection: 'sony-spider-man', universe: 'other', saga: 'Sony Spider-Man', studio: 'Sony Pictures' },
+  { title: 'Spider-Man: Into the Spider-Verse', type: 'movie', releaseDate: '2018-12-14', collection: 'sony-spider-man', universe: 'other', saga: 'Sony Spider-Man', studio: 'Sony Pictures Animation' },
+  { title: 'Venom: Let There Be Carnage', type: 'movie', releaseDate: '2021-10-01', collection: 'sony-spider-man', universe: 'other', saga: 'Sony Spider-Man', studio: 'Sony Pictures' },
+  { title: 'Morbius', type: 'movie', releaseDate: '2022-04-01', collection: 'sony-spider-man', universe: 'other', saga: 'Sony Spider-Man', studio: 'Sony Pictures' },
+  { title: 'Spider-Man: Across the Spider-Verse', type: 'movie', releaseDate: '2023-06-02', collection: 'sony-spider-man', universe: 'other', saga: 'Sony Spider-Man', studio: 'Sony Pictures Animation' },
+  { title: 'Madame Web', type: 'movie', releaseDate: '2024-02-14', collection: 'sony-spider-man', universe: 'other', saga: 'Sony Spider-Man', studio: 'Sony Pictures' },
+  { title: 'Venom: The Last Dance', type: 'movie', releaseDate: '2024-10-25', collection: 'sony-spider-man', universe: 'other', saga: 'Sony Spider-Man', studio: 'Sony Pictures' },
+  { title: 'Kraven the Hunter', type: 'movie', releaseDate: '2024-12-13', collection: 'sony-spider-man', universe: 'other', saga: 'Sony Spider-Man', studio: 'Sony Pictures' },
 
   // Other Marvel: classic pre-MCU films
-  { title: 'The Punisher', type: 'movie', releaseDate: '1989', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: 'New World Pictures' },
-  { title: 'Blade', type: 'movie', releaseDate: '1998-08-21', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: 'New Line Cinema' },
-  { title: 'Blade II', type: 'movie', releaseDate: '2002-03-22', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: 'New Line Cinema' },
-  { title: 'Daredevil', type: 'movie', releaseDate: '2003-02-14', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: '20th Century Fox' },
-  { title: 'Hulk', type: 'movie', releaseDate: '2003-06-20', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: 'Universal Pictures' },
-  { title: 'The Punisher', type: 'movie', releaseDate: '2004-04-16', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: 'Lionsgate' },
-  { title: 'Blade: Trinity', type: 'movie', releaseDate: '2004-12-08', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: 'New Line Cinema' },
-  { title: 'Elektra', type: 'movie', releaseDate: '2005-01-14', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: '20th Century Fox' },
-  { title: 'Fantastic Four', type: 'movie', releaseDate: '2005-07-08', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: '20th Century Fox' },
-  { title: 'Ghost Rider', type: 'movie', releaseDate: '2007-02-16', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: 'Sony Pictures' },
-  { title: 'Fantastic Four: Rise of the Silver Surfer', type: 'movie', releaseDate: '2007-06-15', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: '20th Century Fox' },
-  { title: 'Punisher: War Zone', type: 'movie', releaseDate: '2008-12-05', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: 'Lionsgate' },
-  { title: 'Ghost Rider: Spirit of Vengeance', type: 'movie', releaseDate: '2012-02-17', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: 'Sony Pictures' },
-  { title: 'Fantastic Four', type: 'movie', releaseDate: '2015-08-07', collection: 'classic', universe: 'other', saga: 'Classic Marvel', studio: '20th Century Fox' },
+  { title: 'The Punisher', type: 'movie', releaseDate: '1989', collection: 'classic', universe: 'other', saga: 'Classic films', studio: 'New World Pictures' },
+  { title: 'Blade', type: 'movie', releaseDate: '1998-08-21', collection: 'classic', universe: 'other', saga: 'Classic films', studio: 'New Line Cinema' },
+  { title: 'Blade II', type: 'movie', releaseDate: '2002-03-22', collection: 'classic', universe: 'other', saga: 'Classic films', studio: 'New Line Cinema' },
+  { title: 'Daredevil', type: 'movie', releaseDate: '2003-02-14', collection: 'classic', universe: 'other', saga: 'Classic films', studio: '20th Century Fox' },
+  { title: 'Hulk', type: 'movie', releaseDate: '2003-06-20', collection: 'classic', universe: 'other', saga: 'Classic films', studio: 'Universal Pictures' },
+  { title: 'The Punisher', type: 'movie', releaseDate: '2004-04-16', collection: 'classic', universe: 'other', saga: 'Classic films', studio: 'Lionsgate' },
+  { title: 'Blade: Trinity', type: 'movie', releaseDate: '2004-12-08', collection: 'classic', universe: 'other', saga: 'Classic films', studio: 'New Line Cinema' },
+  { title: 'Elektra', type: 'movie', releaseDate: '2005-01-14', collection: 'classic', universe: 'other', saga: 'Classic films', studio: '20th Century Fox' },
+  { title: 'Fantastic Four', type: 'movie', releaseDate: '2005-07-08', collection: 'classic', universe: 'other', saga: 'Classic films', studio: '20th Century Fox' },
+  { title: 'Ghost Rider', type: 'movie', releaseDate: '2007-02-16', collection: 'classic', universe: 'other', saga: 'Classic films', studio: 'Sony Pictures' },
+  { title: 'Fantastic Four: Rise of the Silver Surfer', type: 'movie', releaseDate: '2007-06-15', collection: 'classic', universe: 'other', saga: 'Classic films', studio: '20th Century Fox' },
+  { title: 'Punisher: War Zone', type: 'movie', releaseDate: '2008-12-05', collection: 'classic', universe: 'other', saga: 'Classic films', studio: 'Lionsgate' },
+  { title: 'Ghost Rider: Spirit of Vengeance', type: 'movie', releaseDate: '2012-02-17', collection: 'classic', universe: 'other', saga: 'Classic films', studio: 'Sony Pictures' },
+  { title: 'Fantastic Four', type: 'movie', releaseDate: '2015-08-07', collection: 'classic', universe: 'other', saga: 'Classic films', studio: '20th Century Fox' },
 
   // Other Marvel: X-Men TV
   {
-    title: 'Legion', type: 'series', releaseDate: '2017-02-08', collection: 'fox-xmen', universe: 'other', saga: 'X-Men', studio: 'Marvel Television',
+    title: 'Legion', type: 'series', releaseDate: '2017-02-08', collection: 'fox-xmen', universe: 'other', saga: 'Fox X-Men', studio: 'Marvel Television',
     seasons: [
       { episodeCount: 8, premiereDate: '2017-02-08' },
       { episodeCount: 11, premiereDate: '2018-04-03' },
@@ -267,14 +267,14 @@ export const EXTRA_TITLES: ExtraTitle[] = [
     ],
   },
   {
-    title: 'The Gifted', type: 'series', releaseDate: '2017-10-02', collection: 'fox-xmen', universe: 'other', saga: 'X-Men', studio: 'Marvel Television',
+    title: 'The Gifted', type: 'series', releaseDate: '2017-10-02', collection: 'fox-xmen', universe: 'other', saga: 'Fox X-Men', studio: 'Marvel Television',
     seasons: [
       { episodeCount: 13, premiereDate: '2017-10-02' },
       { episodeCount: 16, premiereDate: '2018-09-25' },
     ],
   },
   {
-    title: "X-Men '97", type: 'series', releaseDate: '2024-03-20', collection: 'classic', universe: 'other', saga: 'X-Men', studio: 'Marvel Studios Animation',
+    title: "X-Men '97", type: 'series', releaseDate: '2024-03-20', collection: 'classic', universe: 'other', saga: 'Marvel Animation', studio: 'Marvel Studios Animation',
     seasons: [{ episodeCount: 10, premiereDate: '2024-03-20' }],
   },
 ]

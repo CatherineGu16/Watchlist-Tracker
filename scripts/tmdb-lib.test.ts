@@ -32,7 +32,7 @@ const CATALOG: Catalog = {
     title({ id: 'thunderbolts-2025', title: 'Thunderbolts*', releaseDate: '2025-05-02', phase: 5, chronoIndex: 10 }),
     title({ id: 'visionquest-2026', title: 'VisionQuest', type: 'series', releaseDate: '2026-10-14', chronoIndex: 12 }),
     title({ id: 'avengers-doomsday-2026', title: 'Avengers: Doomsday', releaseDate: '2026-12-18', chronoIndex: 14 }),
-    title({ id: 'fantastic-four-2005', title: 'Fantastic Four', releaseDate: '2005-07-08', universe: 'other', collection: 'classic', saga: 'Classic Marvel', phase: null }),
+    title({ id: 'fantastic-four-2005', title: 'Fantastic Four', releaseDate: '2005-07-08', universe: 'other', collection: 'classic', saga: 'Classic films', phase: null }),
   ],
   seasons: [season({ titleId: 'visionquest-2026', number: 1, premiereDate: '2026-10-14', episodeCount: 8 })],
 }
@@ -64,7 +64,7 @@ describe('classify', () => {
     expect(classify(marvel({ id: 5, name: 'x', companies: ['Sony Pictures', 'Marvel Entertainment'] }), CATALOG.titles)).toMatchObject({
       universe: 'other',
       collection: 'sony-spider-man',
-      saga: 'Spider-Man',
+      saga: 'Sony Spider-Man',
       chronoIndex: null,
     })
     expect(classify(marvel({ id: 6, name: 'x', companies: ['20th Century Studios'] }), CATALOG.titles).collection).toBe('fox-xmen')
