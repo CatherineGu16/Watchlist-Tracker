@@ -34,6 +34,30 @@ export async function openSettings(page: Page) {
   await expect(sheet(page)).toBeVisible()
 }
 
+/**
+ * Reloads once the device has saved `count` watches. The app saves a check-off right away, but the
+ * write takes a few milliseconds, and a reload straight after the tap can beat it.
+ */
+export async function reloadWhenSaved(page: Page, count: number) {
+  const saved = () =>
+    page.evaluate(
+      () =>
+        new Promise<number>((resolve) => {
+          const req = indexedDB.open('marvel-watchlist')
+          req.onsuccess = () => {
+            const db = req.result
+            if (!db.objectStoreNames.contains('kv')) return resolve(0)
+            const get = db.transaction('kv').objectStore('kv').get('watchlist')
+            get.onsuccess = () => resolve((get.result?.watches ?? []).filter((w: { deleted?: boolean }) => !w.deleted).length)
+            get.onerror = () => resolve(0)
+          }
+          req.onerror = () => resolve(0)
+        }),
+    )
+  await expect.poll(saved).toBe(count)
+  await page.reload()
+}
+
 export const sheet = (page: Page) => page.getByRole('dialog')
 export const box = (page: Page, title: string) => page.getByRole('checkbox', { name: `${title} watched` })
 export const fixture = (name: string) => fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url))

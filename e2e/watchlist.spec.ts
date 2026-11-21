@@ -1,4 +1,4 @@
-import { box, expect, importBackup, openList, openSettings, sheet, test } from './helpers.ts'
+import { box, expect, importBackup, openList, openSettings, reloadWhenSaved, sheet, test } from './helpers.ts'
 
 test.beforeEach(async ({ page }) => {
   await openList(page)
@@ -11,7 +11,7 @@ test('check off a movie, undo, and keep it after reload', async ({ page }) => {
   await expect(box(page, 'Iron Man')).toHaveAttribute('aria-checked', 'false')
 
   await box(page, 'Thor').click()
-  await page.reload()
+  await reloadWhenSaved(page, 1)
   await expect(box(page, 'Thor')).toHaveAttribute('aria-checked', 'true')
   await expect(page.getByRole('tab', { name: /MCU 1\/\d+/ })).toBeVisible()
 })
@@ -109,7 +109,7 @@ test.describe('offline', () => {
     await page.reload()
     await box(page, 'Iron Man').click()
     await context.setOffline(true)
-    await page.reload()
+    await reloadWhenSaved(page, 1)
     await expect(box(page, 'Iron Man')).toHaveAttribute('aria-checked', 'true')
     await context.setOffline(false)
   })
