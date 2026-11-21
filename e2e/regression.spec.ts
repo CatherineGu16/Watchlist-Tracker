@@ -14,12 +14,12 @@ test.beforeEach(async ({ page }) => {
 })
 
 test.describe('list and progress', () => {
-  test('universe tab and saga legend counts follow check-offs', async ({ page }) => {
+  test('universe tab and saga ring counts follow check-offs', async ({ page }) => {
     await expect(page.getByRole('tab', { name: `MCU 0/${mcu.length}` })).toBeVisible()
-    await expect(page.getByText(`Infinity Saga 0/${infinity.length}`)).toBeVisible()
+    await expect(page.getByRole('listitem', { name: `Infinity Saga: 0 of ${infinity.length} watched` })).toBeVisible()
     await box(page, 'Iron Man').click()
     await expect(page.getByRole('tab', { name: `MCU 1/${mcu.length}` })).toBeVisible()
-    await expect(page.getByText(`Infinity Saga 1/${infinity.length}`)).toBeVisible()
+    await expect(page.getByRole('listitem', { name: `Infinity Saga: 1 of ${infinity.length} watched` })).toBeVisible()
   })
 
   test('release order groups by year with watched counts', async ({ page }) => {
