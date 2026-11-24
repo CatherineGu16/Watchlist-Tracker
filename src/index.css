@@ -3,6 +3,7 @@
 @import '@fontsource/barlow-condensed/600.css';
 @import '@fontsource/barlow/400.css';
 @import '@fontsource/barlow/600.css';
+@import '@fontsource/anton/latin-400.css';
 
 /* Dark ink is the default; light follows the system unless a theme is picked in Settings. */
 :root {
@@ -13,8 +14,9 @@
   --line: #2e3760;
   --fg: #edeff8;
   --muted: #a1a9cc;
-  --primary: #f2c14e;
-  --on-primary: #1d1604;
+  /* Comic red for main actions; gold stays the focus and highlight color. */
+  --primary: #d62631;
+  --on-primary: #ffffff;
   --focus: #f2c14e;
   --danger: #ff7a85;
   --ok: #6fdcb0;
@@ -40,8 +42,8 @@
     --line: #d3d7e8;
     --fg: #161a2e;
     --muted: #555d7c;
-    --primary: #f2c14e;
-    --on-primary: #1d1604;
+    --primary: #c8202b;
+    --on-primary: #ffffff;
     --focus: #3346c4;
     --danger: #c2273a;
     --ok: #0f7a57;
@@ -67,8 +69,8 @@
   --line: #d3d7e8;
   --fg: #161a2e;
   --muted: #555d7c;
-  --primary: #f2c14e;
-  --on-primary: #1d1604;
+  --primary: #c8202b;
+  --on-primary: #ffffff;
   --focus: #3346c4;
   --danger: #c2273a;
   --ok: #0f7a57;
@@ -99,6 +101,8 @@
   --color-ok: var(--ok);
 
   --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  /* Movie-poster headings: page titles, section headings, chapter headers. */
+  --font-poster: 'Anton', 'Impact', 'Arial Narrow', sans-serif;
   --font-sans: 'Barlow', system-ui, sans-serif;
   --color-toast: var(--toast);
   --font-weight-bold: 600;
@@ -153,6 +157,19 @@ body {
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+
+/* Tailwind 4 gives buttons the arrow cursor; anything you can press shows the hand. */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='menuitem'],
+  [role='radio'],
+  summary,
+  select,
+  label:has(> input[type='checkbox'], > input[type='radio']) {
+    cursor: pointer;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

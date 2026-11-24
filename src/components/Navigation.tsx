@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import type { Page } from '../ui/route.ts'
 
 const PAGES: { id: Page; label: string; href: string; icon: ReactNode }[] = [
@@ -16,11 +16,33 @@ const PAGES: { id: Page; label: string; href: string; icon: ReactNode }[] = [
   },
 ]
 
-/** App title, page links (desktop), sync status and Settings. Shown on every page. */
+/**
+ * App title, page links (desktop), sync status and Settings. Shown on every page, and stays at the
+ * top while the page scrolls. Its height goes in --app-bar-h so things that stick below it (Browse's
+ * toolbar, the filter sidebar) sit just under it.
+ */
 export function AppBar({ page, onSettings, syncChip, actions }: { page: Page; onSettings: () => void; syncChip?: ReactNode; actions?: ReactNode }) {
+  const ref = useRef<HTMLElement>(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const root = document.documentElement
+    const set = () => root.style.setProperty('--app-bar-h', `${el.offsetHeight}px`)
+    set()
+    const observer = new ResizeObserver(set)
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      root.style.removeProperty('--app-bar-h')
+    }
+  }, [])
+
   return (
-    <header className="flex items-center gap-2 px-3 pt-[max(1.25rem,env(safe-area-inset-top))] pb-4 sm:px-4">
-      <h1 className="font-display text-[2rem] leading-none font-semibold tracking-tight">Watchlist</h1>
+    <header
+      ref={ref}
+      className="sticky top-0 z-30 flex items-center gap-2 bg-bg px-3 pt-[max(1.25rem,env(safe-area-inset-top))] pb-4 sm:px-4"
+    >
+      <h1 className="font-poster text-[1.9rem] leading-none tracking-wide uppercase">Watchlist</h1>
       <nav aria-label="Pages" className="ml-6 hidden gap-1 lg:flex">
         {PAGES.map((p) => (
           <a

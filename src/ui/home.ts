@@ -36,3 +36,15 @@ export function recentlyWatched(views: TitleView[], limit = 5): HomeItem[] {
     })
     .slice(0, limit)
 }
+
+/**
+ * What to watch next: MCU titles that are out and you haven't finished or started, in release order,
+ * so it picks up wherever your watching left off.
+ */
+export function upNext(views: TitleView[], limit = 6): TitleView[] {
+  return views
+    .filter((v) => v.title.universe === 'mcu' && v.title.releaseDate !== null)
+    .filter((v) => v.summary.status !== 'watched' && v.summary.status !== 'upcoming' && !v.watches.some(isOpen))
+    .sort((a, b) => comparePartialDates(a.title.releaseDate!, b.title.releaseDate!) || a.title.title.localeCompare(b.title.title))
+    .slice(0, limit)
+}

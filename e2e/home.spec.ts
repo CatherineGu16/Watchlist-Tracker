@@ -59,6 +59,17 @@ test('a confirmation’s Undo never reverts a later, unrelated change', async ({
   await expect(recent(page).getByRole('button', { name: /Iron Man/ })).toBeVisible()
 })
 
+test('Up next suggests the next MCU title you have not watched, in release order', async ({ page }) => {
+  const upNext = page.getByRole('region', { name: 'Up next' }).getByRole('listitem')
+  await expect(upNext.first()).toContainText('Iron Man')
+  await nav(page).getByRole('link', { name: 'Browse' }).click()
+  await box(page, 'Iron Man').click()
+  await nav(page).getByRole('link', { name: 'Home' }).click()
+  await expect(upNext.first()).toContainText('The Incredible Hulk')
+  await upNext.first().getByRole('button').click()
+  await expect(sheet(page).getByRole('heading', { name: 'The Incredible Hulk' })).toBeVisible()
+})
+
 test('recently watched cards open the title, and Back closes it', async ({ page }) => {
   await nav(page).getByRole('link', { name: 'Browse' }).click()
   await box(page, 'Iron Man').click()

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildTitleViews } from '../lib/catalogView.ts'
 import type { Catalog, Title } from '../lib/types.ts'
 import { checkOff, emptyData, logWatch, startSeason, type EditContext } from '../lib/watchActions.ts'
-import { continueWatching, recentlyWatched } from './home.ts'
+import { continueWatching, recentlyWatched, upNext } from './home.ts'
 import { parseHash, toHash } from './route.ts'
 
 const t = (id: string, over: Partial<Title> = {}): Title => ({
@@ -69,5 +69,24 @@ describe('routes', () => {
     expect(parseHash('#/nonsense')).toEqual({ page: 'home', titleId: null })
     expect(toHash({ page: 'browse', titleId: 'a b' })).toBe('#/browse?title=a%20b')
     expect(parseHash(toHash({ page: 'home', titleId: 'x' }))).toEqual({ page: 'home', titleId: 'x' })
+  })
+})
+
+describe('upNext', () => {
+  it('suggests unwatched MCU titles that are out, in release order, skipping what you are watching', () => {
+    const titles: Catalog = {
+      ...catalog,
+      titles: [
+        t('first', { releaseDate: '2008-05-02' }),
+        t('seen', { releaseDate: '2009-01-01' }),
+        t('second', { releaseDate: '2010-05-07' }),
+        t('other', { releaseDate: '2009-06-01', universe: 'other' }),
+        t('later', { releaseDate: '2027-01-01' }),
+        t('show', { type: 'series', releaseDate: '2011-01-01' }),
+      ],
+    }
+    let d = checkOff(emptyData(''), ctx(), 'seen', '2026-01-01')
+    d = startSeason(d, ctx(), 'show', 'show-s1', '2026-10-01')
+    expect(upNext(buildTitleViews(titles, d, '2026-10-16')).map((v) => v.title.id)).toEqual(['first', 'second'])
   })
 })

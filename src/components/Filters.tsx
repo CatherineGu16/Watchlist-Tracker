@@ -124,7 +124,7 @@ export function FilterDrawer({
 /** Desktop: always beside the list, and changes apply as you pick them. */
 export function FilterSidebar({ value, onChange, ...options }: Options & { value: FilterValues; onChange: (v: FilterValues) => void }) {
   return (
-    <aside aria-label="Filters" className="sticky top-0 hidden max-h-dvh self-start overflow-y-auto px-4 pt-6 pb-10 lg:block">
+    <aside aria-label="Filters" className="sticky top-[var(--app-bar-h,0px)] hidden max-h-[calc(100dvh-var(--app-bar-h,0px))] self-start overflow-y-auto px-4 pt-6 pb-10 lg:block">
       <div className="mb-4 flex items-baseline justify-between">
         <h2 className="font-display text-xl font-semibold">Filters</h2>
         {!isEmpty(value) && (
