@@ -11,7 +11,7 @@ type Actions = ReturnType<typeof useActions>
 const nameOf = (i: HomeItem) => (i.season ? `${i.view.title.title} ${i.season.label}` : i.view.title.title)
 
 /** Shortcuts before the full list: what you're in the middle of, and what you just watched. */
-export function Home({ views, actions, onOpen, onBrowse }: { views: TitleView[]; actions: Actions; onOpen: (id: string) => void; onBrowse: () => void }) {
+export function Home({ views, actions, onOpen }: { views: TitleView[]; actions: Actions; onOpen: (id: string) => void }) {
   const watching = continueWatching(views)
   const recent = recentlyWatched(views)
 
@@ -60,12 +60,6 @@ export function Home({ views, actions, onOpen, onBrowse }: { views: TitleView[];
           </ul>
         )}
       </section>
-
-      <div className="lg:col-span-2">
-        <button onClick={onBrowse} className="min-h-11 w-full rounded-lg bg-raised px-4 font-bold hover:bg-line sm:w-auto">
-          Browse all titles
-        </button>
-      </div>
     </div>
   )
 }

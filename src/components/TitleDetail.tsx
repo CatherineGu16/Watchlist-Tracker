@@ -11,13 +11,13 @@ import { MoreMenu, type MenuItem } from './MoreMenu.tsx'
 import { SeasonCard } from './SeasonCard.tsx'
 import { Sheet } from './Sheet.tsx'
 import { SeasonFields } from './TitleForm.tsx'
-import { WatchHistory } from './WatchHistory.tsx'
+import { WatchHistory, WatchList } from './WatchHistory.tsx'
 
 type Actions = ReturnType<typeof useActions>
 
 /** What the panel shows besides its main view. */
 type Subview =
-  | { kind: 'history'; seasonId: string | null; editId?: string }
+  | { kind: 'history'; seasonId: string | null; editId?: string; adding?: boolean }
   | { kind: 'season'; seasonId: string | null }
   | { kind: 'delete' }
 
@@ -72,7 +72,7 @@ function DetailBody({
   const seasonOf = (id: string | null) => (id ? (view.seasons.find((s) => s.id === id) ?? null) : null)
 
   if (sub?.kind === 'history') {
-    return <WatchHistory view={view} season={seasonOf(sub.seasonId)} actions={actions} editId={sub.editId} onBack={back} />
+    return <WatchHistory view={view} season={seasonOf(sub.seasonId)} actions={actions} editId={sub.editId} adding={sub.adding} onBack={back} />
   }
   if (sub?.kind === 'season') {
     return <SeasonEditor view={view} season={seasonOf(sub.seasonId)} actions={actions} onDone={back} />
@@ -137,7 +137,13 @@ function DetailBody({
           onEditSeason={(seasonId) => setSub({ kind: 'season', seasonId })}
         />
       ) : (
-        <MovieBody view={view} actions={actions} extraItems={titleItems} onHistory={() => setSub({ kind: 'history', seasonId: null })} />
+        <MovieBody
+          view={view}
+          actions={actions}
+          extraItems={titleItems}
+          onHistory={() => setSub({ kind: 'history', seasonId: null })}
+          onAddWatch={() => setSub({ kind: 'history', seasonId: null, adding: true })}
+        />
       )}
     </>
   )
@@ -236,8 +242,23 @@ function Facts({ view }: { view: TitleView }) {
   )
 }
 
-/** Face up: when you last watched it and how many times. Every date lives in Watch history. */
-function MovieBody({ view, actions, onHistory, extraItems }: { view: TitleView; actions: Actions; onHistory: () => void; extraItems: MenuItem[] }) {
+/**
+ * Face up: when you last watched it and how many times, and logging another watch, today or on
+ * another date. Every date lives in Watch history.
+ */
+function MovieBody({
+  view,
+  actions,
+  onHistory,
+  onAddWatch,
+  extraItems,
+}: {
+  view: TitleView
+  actions: Actions
+  onHistory: () => void
+  onAddWatch: () => void
+  extraItems: MenuItem[]
+}) {
   const today = todayIso()
   const finished = view.watches.filter(isFinished).sort(compareWatches)
   const last = finished.at(-1)
@@ -260,14 +281,26 @@ function MovieBody({ view, actions, onHistory, extraItems }: { view: TitleView; 
         </div>
         <MoreMenu label={`More for ${view.title.title}`} items={menu} />
       </div>
-      <button
-        onClick={() =>
-          actions.logWatch(view, { startDate: today, endDate: today }, finished.length ? `Logged a rewatch of ${view.title.title}` : `Checked off ${view.title.title}`)
-        }
-        className="mt-3 min-h-11 rounded-lg bg-primary px-4 font-bold text-on-primary"
-      >
-        {finished.length ? 'Log a rewatch today' : 'Watched it today'}
-      </button>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          onClick={() =>
+            actions.logWatch(view, { startDate: today, endDate: today }, finished.length ? `Logged a rewatch of ${view.title.title}` : `Checked off ${view.title.title}`)
+          }
+          className="min-h-11 rounded-lg bg-primary px-4 font-bold text-on-primary"
+        >
+          {finished.length ? 'Log a rewatch today' : 'Watched it today'}
+        </button>
+        <button onClick={onAddWatch} className="min-h-11 rounded-lg bg-raised px-4 font-bold hover:bg-line">
+          Another date
+        </button>
+      </div>
+      {/* Desktop has the room to show every watch face up; phones keep it behind Watch history. */}
+      {view.watches.length > 0 && (
+        <section aria-label="Watches" className="mt-5 hidden lg:block">
+          <h3 className="font-display text-lg font-semibold">Watch history</h3>
+          <WatchList view={view} season={null} actions={actions} className="mt-1 max-h-80 overflow-y-auto overscroll-contain pr-1" />
+        </section>
+      )}
     </section>
   )
 }

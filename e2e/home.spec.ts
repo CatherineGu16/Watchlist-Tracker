@@ -14,7 +14,7 @@ test('opens on Home with empty sections that say what to do', async ({ page }) =
   await expect(nav(page).getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
   await expect(watching(page)).toContainText('Nothing in progress')
   await expect(recent(page)).toContainText('Check off a movie')
-  await page.getByRole('button', { name: 'Browse all titles' }).click()
+  await nav(page).getByRole('link', { name: 'Browse' }).click()
   await expect(page.getByRole('searchbox', { name: 'Search titles' })).toBeVisible()
   await expect(nav(page).getByRole('link', { name: 'Browse' })).toHaveAttribute('aria-current', 'page')
 })
@@ -100,7 +100,7 @@ test('Home fits the screen with a full row of recent watches', async ({ page }) 
     await page.setViewportSize({ width, height: 800 })
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
     expect(overflow, `at ${width}px`).toBeLessThanOrEqual(0)
-    await expect(page.getByRole('button', { name: 'Browse all titles' })).toBeInViewport()
+    await expect(recent(page)).toBeInViewport()
   }
 })
 

@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import type { TitleView } from '../lib/catalogView.ts'
 import { todayIso } from '../lib/partialDate.ts'
-import { isOpen } from '../lib/status.ts'
+import { hasDatedWatch, isOpen } from '../lib/status.ts'
 import { formatCountdown, formatDate, plural } from '../ui/format.ts'
 import type { ListEntry } from '../ui/listQuery.ts'
 import { sagaColor } from '../ui/sagas.ts'
@@ -28,13 +28,13 @@ export const TitleRow = memo(function TitleRow({
 
   return (
     <li
-      className="relative flex items-center gap-1 border-b border-line pr-1 pl-2 sm:pl-3"
+      className="relative flex items-center gap-1 border-b border-line pr-1 pl-2 hover:bg-surface sm:pl-3"
       style={{ boxShadow: `inset 4px 0 0 ${sagaColor(title.saga)}` }}
     >
       <CheckButton view={view} onToggle={() => onToggle(entry)} onOpen={() => onOpen(title.id)} />
       <button
         onClick={() => onOpen(title.id)}
-        className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-lg py-2 pr-2 pl-1 text-left hover:bg-surface"
+        className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-lg py-2 pr-2 pl-1 text-left"
       >
         <span className="min-w-0 flex-1">
           <span className="block truncate font-display text-[1.2rem] leading-tight font-semibold">
@@ -78,12 +78,18 @@ function SeasonRow({
   const phase = season.phase ?? title.phase
 
   return (
-    <li className="relative flex items-center gap-1 border-b border-line pr-1 pl-2 sm:pl-3" style={{ boxShadow: `inset 4px 0 0 ${sagaColor(title.saga)}` }}>
-      <Stamp label={`${title.title} ${season.label} watched`} status={status} color={sagaColor(title.saga)} onToggle={() => onToggle(entry)} />
+    <li className="relative flex items-center gap-1 border-b border-line pr-1 pl-2 hover:bg-surface sm:pl-3" style={{ boxShadow: `inset 4px 0 0 ${sagaColor(title.saga)}` }}>
+      <Stamp
+        label={`${title.title} ${season.label} watched`}
+        status={status}
+        color={sagaColor(title.saga)}
+        locked={hasDatedWatch(view.watches.filter((w) => w.seasonId === season.id))}
+        onToggle={() => onToggle(entry)}
+      />
       <button
         onClick={() => onOpen(title.id)}
         aria-label={`${title.title} ${season.label}`}
-        className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-lg py-2 pr-2 pl-1 text-left hover:bg-surface"
+        className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-lg py-2 pr-2 pl-1 text-left"
       >
         <span className="min-w-0 flex-1">
           <span className="block truncate font-display text-[1.2rem] leading-tight font-semibold">

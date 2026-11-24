@@ -1,5 +1,5 @@
 import type { TitleView } from '../lib/catalogView.ts'
-import type { ItemStatus } from '../lib/status.ts'
+import { hasDatedWatch, type ItemStatus } from '../lib/status.ts'
 import { sagaColor } from '../ui/sagas.ts'
 
 /**
@@ -35,17 +35,45 @@ export function CheckButton({ view, onToggle, onOpen }: { view: TitleView; onTog
     )
   }
 
-  return <Stamp label={`${title.title} watched`} status={summary.status} color={color} onToggle={onToggle} />
+  return (
+    <Stamp
+      label={`${title.title} watched`}
+      status={summary.status}
+      color={color}
+      locked={hasDatedWatch(view.watches.filter((w) => w.seasonId === null))}
+      onToggle={onToggle}
+    />
+  )
 }
 
 /**
  * The check-off stamp for a movie, a special, or one season. Dashed before release; a dot while
- * you're partway through a season.
+ * you're partway through a season. `locked` once it has a dated watch: it shows the check, and a
+ * tap opens the title rather than un-checking it.
  */
-export function Stamp({ label, status, color, onToggle }: { label: string; status: ItemStatus; color: string; onToggle: () => void }) {
+export function Stamp({
+  label,
+  status,
+  color,
+  locked = false,
+  onToggle,
+}: {
+  label: string
+  status: ItemStatus
+  color: string
+  locked?: boolean
+  onToggle: () => void
+}) {
   const watched = status === 'watched'
   return (
-    <button onClick={onToggle} role="checkbox" aria-checked={watched} aria-label={label} className="grid size-11 shrink-0 place-items-center rounded-full">
+    <button
+      onClick={onToggle}
+      role="checkbox"
+      aria-checked={watched}
+      aria-readonly={locked || undefined}
+      aria-label={label}
+      className="grid size-11 shrink-0 place-items-center rounded-full"
+    >
       <span
         key={String(watched)}
         className={`grid size-8 place-items-center rounded-full border-2 transition-colors ${status === 'upcoming' ? 'border-dashed' : ''} ${watched ? '[animation:stamp_220ms_ease-out]' : ''}`}

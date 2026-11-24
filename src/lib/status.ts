@@ -8,6 +8,14 @@ export function isFinished(w: Watch): boolean {
   return !w.deleted && (w.endDate !== null || w.startDate === null)
 }
 
+/**
+ * A finished watch with a date. Once a movie or season has one, its checkmark only shows that it's
+ * watched: a tap opens the title instead of un-checking it, so a stray tap can't lose the date.
+ */
+export function hasDatedWatch(watches: Watch[]): boolean {
+  return watches.some((w) => isFinished(w) && (w.startDate !== null || w.endDate !== null))
+}
+
 /** Open: started, not finished yet. */
 export function isOpen(w: Watch): boolean {
   return !w.deleted && w.startDate !== null && w.endDate === null

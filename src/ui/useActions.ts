@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { TitleView } from '../lib/catalogView.ts'
 import { todayIso } from '../lib/partialDate.ts'
-import { isFinished } from '../lib/status.ts'
+import { hasDatedWatch, isFinished } from '../lib/status.ts'
 import type { Collection, Season, Universe } from '../lib/types.ts'
 import {
   checkOff,
@@ -59,10 +59,12 @@ export function useActions(openDetail?: (titleId: string, opts?: OpenDetailOptio
     }
 
     return {
-      /** Checkbox on a movie/special row. */
+      /** Checkbox on a movie/special row. Checks off today; once watched with a date, opens the title. */
       toggleMovie(v: TitleView) {
         const finished = v.watches.filter(isFinished)
-        if (finished.length === 0) {
+        if (hasDatedWatch(v.watches)) {
+          openDetail?.(v.title.id)
+        } else if (finished.length === 0) {
           const today = todayIso()
           const label = `Checked off ${v.title.title}`
           const id = store.apply((d, c) => checkOff(d, c, v.title.id, today), label)
@@ -80,7 +82,9 @@ export function useActions(openDetail?: (titleId: string, opts?: OpenDetailOptio
         const mine = v.watches.filter((w) => w.seasonId === s.id)
         const finished = mine.filter(isFinished)
         const name = `${v.title.title} ${s.label}`
-        if (mine.length === 0) {
+        if (hasDatedWatch(mine)) {
+          openDetail?.(v.title.id)
+        } else if (mine.length === 0) {
           const today = todayIso()
           const label = `Checked off ${name}`
           const id = store.apply((d, c) => checkOff(d, c, v.title.id, today, s.id), label)

@@ -19,12 +19,19 @@ test('an unwatched show has no "date unknown" buttons face up; they live in the 
   await expect(sheet(page).getByRole('listitem', { name: 'Season 1' })).toContainText('Last watched date unknown')
 })
 
-test('a rewatched movie shows only its last watch; every date is in Watch history, newest first', async ({ page }) => {
+test('a rewatched movie leads with its last watch; every date is in Watch history, newest first', async ({ page }) => {
   await importBackup(page, 'regression-backup.json')
   await page.getByRole('button', { name: /^Captain America: Brave New World Movie/ }).click()
   await expect(sheet(page).getByRole('heading', { name: 'Last watched Aug 10, 2025' })).toBeVisible()
   await expect(sheet(page).getByText('Watched 2 times')).toBeVisible()
-  await expect(sheet(page).getByRole('button', { name: /^Edit / })).toHaveCount(0)
+  if ((page.viewportSize()?.width ?? 0) >= 1024) {
+    // Desktop shows every watch face up under the buttons.
+    const faceUp = sheet(page).getByRole('region', { name: 'Watches' }).getByRole('listitem')
+    await expect(faceUp).toHaveCount(2)
+    await expect(faceUp.nth(0)).toContainText('Aug 10, 2025')
+  } else {
+    await expect(sheet(page).getByRole('button', { name: /^Edit / })).toHaveCount(0)
+  }
 
   await sheet(page).getByRole('button', { name: 'More for Captain America: Brave New World' }).click()
   await page.getByRole('menuitem', { name: 'Watch history (2)' }).click()

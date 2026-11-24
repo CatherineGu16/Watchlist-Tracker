@@ -53,13 +53,34 @@ test.describe('list and progress', () => {
 })
 
 test.describe('checking off', () => {
-  test('uncheck a single-watch movie, then undo the uncheck', async ({ page }) => {
+  test('a check with a date stays checked: tapping it again opens the title', async ({ page }) => {
     await box(page, 'Thor').click()
+    await expect(box(page, 'Thor')).toHaveAttribute('aria-readonly', 'true')
+    await box(page, 'Thor').click()
+    await expect(sheet(page).getByRole('heading', { name: 'Thor', exact: true })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(box(page, 'Thor')).toHaveAttribute('aria-checked', 'true')
+  })
+
+  test('a check with no date can still be unchecked, then undone', async ({ page }) => {
+    await page.getByRole('button', { name: /^Thor Movie/ }).click()
+    await sheet(page).getByRole('button', { name: 'More for Thor' }).click()
+    await page.getByRole('menuitem', { name: 'Watched, date unknown' }).click()
+    await page.keyboard.press('Escape')
+    await expect(box(page, 'Thor')).not.toHaveAttribute('aria-readonly', 'true')
     await box(page, 'Thor').click()
     await expect(box(page, 'Thor')).toHaveAttribute('aria-checked', 'false')
     await expect(page.getByRole('status')).toContainText('Unchecked Thor')
     await page.getByRole('status').getByRole('button', { name: 'Undo' }).click()
     await expect(box(page, 'Thor')).toHaveAttribute('aria-checked', 'true')
+  })
+
+  test('a rewatch on another date, from the title', async ({ page }) => {
+    await box(page, 'Thor').click()
+    await box(page, 'Thor').click()
+    await sheet(page).getByRole('button', { name: 'Another date' }).click()
+    await sheet(page).getByRole('button', { name: 'Add watch' }).click()
+    await expect(sheet(page).getByText('2 watches')).toBeVisible()
   })
 
   test('Change date in the confirmation opens that title', async ({ page }) => {

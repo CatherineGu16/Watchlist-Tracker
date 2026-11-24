@@ -54,7 +54,7 @@ export default function App() {
 function Shell({ store }: { store: WatchlistStore }) {
   const state = useWatchlistState(store)
   const views = useTitleViews(store)
-  const { route, goTo, openTitle, closeTitle } = useRoute()
+  const { route, openTitle, closeTitle } = useRoute()
   const [query, setQuery] = usePersistentState<ListQuery>('watchlist.query.v1', DEFAULT_QUERY, reviveQuery)
   const [editLatestFor, setEditLatestFor] = useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -148,7 +148,7 @@ function Shell({ store }: { store: WatchlistStore }) {
 
           {route.page === 'home' ? (
             <main>
-              <Home views={views} actions={actions} onOpen={openDetail} onBrowse={() => goTo('browse')} />
+              <Home views={views} actions={actions} onOpen={openDetail} />
             </main>
           ) : (
             <main>

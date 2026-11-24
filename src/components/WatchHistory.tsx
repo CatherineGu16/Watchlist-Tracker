@@ -15,6 +15,7 @@ export function WatchHistory({
   season,
   actions,
   editId,
+  adding: startAdding = false,
   onBack,
 }: {
   view: TitleView
@@ -22,9 +23,11 @@ export function WatchHistory({
   actions: Actions
   /** Opens this watch's editor straight away (from "Change date"). */
   editId?: string
+  /** Opens the form for another watch straight away (from "Another date"). */
+  adding?: boolean
   onBack: () => void
 }) {
-  const [adding, setAdding] = useState(false)
+  const [adding, setAdding] = useState(startAdding)
   const name = season ? `${view.title.title} ${season.label}` : view.title.title
   const kind = season ? 'range' : 'single'
   const watches = view.watches.filter((w) => w.seasonId === (season?.id ?? null)).sort(compareWatches)
@@ -72,25 +75,46 @@ export function WatchHistory({
         </button>
       )}
 
-      {watches.length > 0 && (
-        <ul className="mt-3 divide-y divide-line">
-          {/* Newest first; the label still counts from the first viewing. */}
-          {watches
-            .map((w, i) => ({ w, i }))
-            .reverse()
-            .map(({ w, i }) => (
-              <WatchItem
-                key={w.id}
-                watch={w}
-                index={i}
-                kind={kind}
-                initiallyEditing={w.id === editId}
-                onSave={(patch) => actions.updateWatch(w.id, patch, `Updated ${name}`)}
-                onDelete={() => actions.deleteWatch(w.id, `Removed a watch of ${name}`)}
-              />
-            ))}
-        </ul>
-      )}
+      <WatchList view={view} season={season} actions={actions} editId={editId} className="mt-3" />
     </section>
+  )
+}
+
+/** The watches of a movie or one season, newest first, each editable in place. */
+export function WatchList({
+  view,
+  season,
+  actions,
+  editId,
+  className = '',
+}: {
+  view: TitleView
+  season: Season | null
+  actions: Actions
+  editId?: string
+  className?: string
+}) {
+  const name = season ? `${view.title.title} ${season.label}` : view.title.title
+  const kind = season ? 'range' : 'single'
+  const watches = view.watches.filter((w) => w.seasonId === (season?.id ?? null)).sort(compareWatches)
+  if (!watches.length) return null
+  return (
+    <ul className={`divide-y divide-line ${className}`}>
+      {/* Newest first; the label still counts from the first viewing. */}
+      {watches
+        .map((w, i) => ({ w, i }))
+        .reverse()
+        .map(({ w, i }) => (
+          <WatchItem
+            key={w.id}
+            watch={w}
+            index={i}
+            kind={kind}
+            initiallyEditing={w.id === editId}
+            onSave={(patch) => actions.updateWatch(w.id, patch, `Updated ${name}`)}
+            onDelete={() => actions.deleteWatch(w.id, `Removed a watch of ${name}`)}
+          />
+        ))}
+    </ul>
   )
 }
