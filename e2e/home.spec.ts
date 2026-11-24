@@ -94,7 +94,8 @@ test('Home fits the screen with a full row of recent watches', async ({ page }) 
   await page.getByRole('navigation', { name: 'Pages' }).getByRole('link', { name: 'Browse' }).click()
   for (const t of ['Iron Man', 'Thor', 'Black Panther', 'Eternals', 'The Marvels', 'Ant-Man']) await box(page, t).click()
   await nav(page).getByRole('link', { name: 'Home' }).click()
-  await expect(recent(page).getByRole('listitem')).toHaveCount(6)
+  // Six watched, the latest five shown.
+  await expect(recent(page).getByRole('listitem')).toHaveCount(5)
   for (const width of [360, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 800 })
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)

@@ -52,6 +52,12 @@ describe('recentlyWatched', () => {
     for (const id of ['a', 'b']) d = checkOff(d, ctx(), id, '2026-01-01')
     expect(recentlyWatched(buildTitleViews(catalog, d, '2026-10-16'), 1)).toHaveLength(1)
   })
+  it('shows the latest 5 by default', () => {
+    const many: Catalog = { ...catalog, titles: ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'].map((id) => t(id)) }
+    let d = emptyData('')
+    many.titles.forEach((title, i) => (d = checkOff(d, ctx(), title.id, `2026-0${i + 1}-01`)))
+    expect(recentlyWatched(buildTitleViews(many, d, '2026-10-16')).map((i) => i.view.title.id)).toEqual(['m7', 'm6', 'm5', 'm4', 'm3'])
+  })
 })
 
 describe('routes', () => {

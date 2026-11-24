@@ -39,8 +39,9 @@ export function Home({ views, actions, onOpen, onBrowse }: { views: TitleView[];
         {recent.length === 0 ? (
           <Empty>Check off a movie or finish a season and it shows up here.</Empty>
         ) : (
-          // A swipeable row on phones, a list beside "Continue watching" on desktop.
-          <ul className="-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 pb-2 sm:-mx-4 sm:px-4 lg:mx-0 lg:grid lg:overflow-visible lg:px-0">
+          // A swipeable row on phones, a list beside "Continue watching" on desktop. The row scrolls to the
+          // screen edges, but cards snap to the page margin (scroll-px) rather than the edge.
+          <ul className="-mx-3 flex snap-x snap-mandatory scroll-px-3 gap-3 overflow-x-auto px-3 pb-2 sm:-mx-4 sm:scroll-px-4 sm:px-4 lg:mx-0 lg:grid lg:overflow-visible lg:px-0">
             {recent.map((i) => (
               <li key={i.watch.id} className="w-40 shrink-0 snap-start lg:w-auto">
                 <button
