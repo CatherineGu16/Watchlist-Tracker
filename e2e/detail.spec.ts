@@ -9,14 +9,18 @@ test('an unwatched show has no "date unknown" buttons face up; they live in the 
   await page.getByRole('radio', { name: 'TV' }).click()
   await page.getByRole('button', { name: /^Loki: 0 of 2 seasons watched/ }).click()
   await expect(sheet(page).getByRole('button', { name: /date unknown/i })).toHaveCount(0)
-  await expect(sheet(page).getByRole('button', { name: 'Start watching' })).toHaveCount(2)
+  // The next step is the one button face up; the seasons below are a compact checklist.
+  await expect(sheet(page).getByRole('button', { name: 'Start Season 1' })).toBeVisible()
+  await expect(sheet(page).getByRole('button', { name: 'Start watching' })).toHaveCount(0)
 
   await sheet(page).getByRole('button', { name: 'More for Loki' }).click()
   await expect(page.getByRole('menuitem', { name: 'Mark all 2 seasons watched, date unknown' })).toBeVisible()
   await page.keyboard.press('Escape')
+  await expect(page.getByRole('menu')).toHaveCount(0)
+  await sheet(page).getByRole('listitem', { name: 'Season 1' }).getByRole('button', { name: /^Season 1/ }).click()
   await sheet(page).getByRole('button', { name: 'More for Season 1' }).click()
-  await page.getByRole('menuitem', { name: 'Watched, date unknown' }).click()
-  await expect(sheet(page).getByRole('listitem', { name: 'Season 1' })).toContainText('Last watched date unknown')
+  await page.getByRole('menuitem', { name: 'Watched, date unknown', exact: true }).click()
+  await expect(sheet(page).getByRole('listitem', { name: 'Season 1' })).toContainText('Date unknown')
 })
 
 test('a rewatched movie leads with its last watch; every date is in Watch history, newest first', async ({ page }) => {
@@ -69,7 +73,7 @@ test('Change date in the confirmation opens straight into editing that watch', a
 test('a season in progress shows its counter face up and its start in history', async ({ page }) => {
   await page.getByRole('radio', { name: 'TV' }).click()
   await page.getByRole('button', { name: /^Echo: 0 of 1 seasons/ }).click()
-  await sheet(page).getByRole('button', { name: 'Start watching' }).click()
+  await sheet(page).getByRole('button', { name: 'Start Season 1' }).click()
   const season = sheet(page).getByRole('listitem', { name: 'Season 1' })
   await expect(season).toContainText('Started Oct 16, 2026')
   await expect(season.getByRole('button', { name: 'One more episode' })).toBeVisible()
@@ -87,4 +91,17 @@ test('removing a watch from history can be undone', async ({ page }) => {
   await page.getByRole('status').getByRole('button', { name: 'Undo' }).click()
   await page.keyboard.press('Escape')
   await expect(box(page, 'Iron Man')).toHaveAttribute('aria-checked', 'true')
+})
+
+test('More shows only when the synopsis is cut off, and reveals the rest', async ({ page }) => {
+  await page.goto('./#/browse?title=iron-man-2008')
+  await expect(sheet(page).locator('#synopsis')).toBeVisible()
+  await expect(sheet(page).getByRole('button', { name: 'More', exact: true })).toHaveCount(0)
+
+  await page.goto('./#/browse?title=captain-america-the-winter-soldier-2014')
+  const synopsis = sheet(page).locator('#synopsis')
+  const clamped = (await synopsis.boundingBox())!.height
+  await sheet(page).getByRole('button', { name: 'More', exact: true }).click()
+  await expect(sheet(page).getByRole('button', { name: 'Less', exact: true })).toBeVisible()
+  expect((await synopsis.boundingBox())!.height).toBeGreaterThan(clamped)
 })

@@ -116,7 +116,7 @@ function Ring({ done, total, color }: { done: number; total: number; color: stri
           style={done === 0 ? { display: 'none' } : undefined}
         />
       </svg>
-      <span className="text-[0.8125rem] font-bold tabular-nums">
+      <span className="text-sm font-bold tabular-nums">
         {done}
         <span className="font-normal text-muted">/{total}</span>
       </span>

@@ -36,12 +36,13 @@ export function TitleList({
       {groups.map((g) => (
         <section key={g.key} aria-labelledby={`group-${g.key}`}>
           <header className="flex items-end gap-3 px-3 pt-6 pb-2 sm:px-4">
-            <h2 id={`group-${g.key}`} className="font-display text-[1.75rem] leading-none font-semibold tracking-tight">
+            <h2 id={`group-${g.key}`} className="font-display text-2xl leading-none font-semibold tracking-tight">
               {g.label}
             </h2>
             <span className="pb-0.5 text-sm text-muted tabular-nums">
               {g.watched}/{g.items.length}
             </span>
+            {!showYear && phasesOf(g) && <span className="pb-0.5 text-sm text-muted">{phasesOf(g)}</span>}
             {g.saga && (
               <span className="mb-1.5 h-1.5 flex-1 overflow-hidden rounded-full bg-line" aria-hidden="true">
                 <span className="block h-full rounded-full" style={{ width: `${(g.watched / g.items.length) * 100}%`, background: sagaColor(g.saga) }} />
@@ -57,4 +58,10 @@ export function TitleList({
       ))}
     </div>
   )
+}
+
+/** The MCU phases a year's titles belong to, when that's one or two: "Phase 4", "Phases 4 & 5". */
+function phasesOf(g: ListGroup): string | null {
+  const nums = [...new Set(g.items.map((e) => e.season?.phase ?? e.view.title.phase).filter((p): p is number => p !== null))].sort((a, b) => a - b)
+  return nums.length === 1 ? `Phase ${nums[0]}` : nums.length === 2 ? `Phases ${nums[0]} & ${nums[1]}` : null
 }

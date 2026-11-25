@@ -31,7 +31,8 @@ test('add a movie, open it from the confirmation, and find it in the list', asyn
   await page.keyboard.press('Escape')
 
   await page.getByRole('searchbox', { name: 'Search titles' }).fill('blade')
-  await expect(page.getByRole('button', { name: /^Blade Movie/ })).toContainText('Phase 6')
+  // Grouped by year, the phase is in the year's header.
+  await expect(page.getByRole('region', { name: '2027' })).toContainText('Phase 6')
   await page.reload()
   await page.getByRole('searchbox', { name: 'Search titles' }).fill('blade')
   await expect(box(page, 'Blade')).toBeVisible()
@@ -59,9 +60,9 @@ test('add a show with seasons and start watching it', async ({ page }) => {
   await page.getByRole('button', { name: /^Wonder Woman Animated: 0 of 2 seasons/ }).click()
   await expect(sheet(page).getByRole('listitem', { name: 'Season 1' })).toContainText('10 episodes')
   // Season 1 was left undated, so it takes the show's premiere year.
-  await expect(sheet(page).getByRole('listitem', { name: 'Season 1' })).toContainText('Premiered 2024')
+  await expect(sheet(page).getByRole('listitem', { name: 'Season 1' })).toContainText('2024')
   await expect(sheet(page).getByRole('listitem', { name: 'Season 2' })).toContainText('8 episodes')
-  await sheet(page).getByRole('listitem', { name: 'Season 1' }).getByRole('button', { name: 'Start watching' }).click()
+  await sheet(page).getByRole('button', { name: 'Start Season 1' }).click()
   await expect(sheet(page).getByRole('listitem', { name: 'Season 1' })).toContainText('0 / 10')
 })
 
@@ -122,13 +123,13 @@ test('add an announced season to a show from the catalog, then delete it', async
 
   const s2 = sheet(page).getByRole('listitem', { name: 'Season 2' })
   await expect(s2).toContainText('6 episodes')
-  await expect(s2).toContainText('Premiere date to be announced')
-  await expect(s2).toContainText('Upcoming')
+  await expect(s2).toContainText('Date TBA')
   // An unaired season doesn't count against being caught up.
   await page.keyboard.press('Escape')
   await expect(page.getByRole('button', { name: /^Hawkeye: 0 of 1 seasons/ })).toBeVisible()
 
   await page.getByRole('button', { name: /^Hawkeye Series/ }).click()
+  await s2.getByRole('button', { name: /^Season 2/ }).click()
   await sheet(page).getByRole('button', { name: 'More for Season 2' }).click()
   await page.getByRole('menuitem', { name: 'Edit or delete season' }).click()
   await sheet(page).getByRole('button', { name: 'Delete season' }).click()

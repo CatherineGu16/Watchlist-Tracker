@@ -213,7 +213,7 @@ export function TitleForm({
             <ol className="mt-2 space-y-3">
               {seasons.map((s, i) => (
                 <li key={i} className="rounded-xl border border-line p-3" aria-label={`Season ${i + 1}`}>
-                  <p className="font-display text-lg font-semibold">Season {i + 1}</p>
+                  <p className="font-display text-xl font-semibold">Season {i + 1}</p>
                   <SeasonFields
                     value={s}
                     onChange={(v) => setSeasons(seasons.map((x, j) => (j === i ? v : x)))}

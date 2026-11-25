@@ -1,14 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { TitleView } from '../lib/catalogView.ts'
 import { todayIso } from '../lib/partialDate.ts'
 import type { SeasonInput } from '../lib/customTitles.ts'
-import { compareWatches, isFinished, isReleased, seasonStatus } from '../lib/status.ts'
-import type { Season } from '../lib/types.ts'
+import { compareWatches, isFinished, isOpen, isReleased, seasonStatus } from '../lib/status.ts'
+import type { Season, Watch } from '../lib/types.ts'
 import { formatCountdown, formatDate, formatRuntime, formatWatch, plural } from '../ui/format.ts'
 import { sagaColor } from '../ui/sagas.ts'
 import type { useActions } from '../ui/useActions.ts'
 import { MoreMenu, type MenuItem } from './MoreMenu.tsx'
-import { SeasonCard } from './SeasonCard.tsx'
+import { SeasonRow } from './SeasonCard.tsx'
 import { Sheet } from './Sheet.tsx'
 import { SeasonFields } from './TitleForm.tsx'
 import { WatchHistory, WatchList } from './WatchHistory.tsx'
@@ -122,7 +122,7 @@ function DetailBody({
               alt=""
               width={342}
               height={513}
-              className="aspect-[2/3] w-24 shrink-0 rounded-lg bg-raised object-cover"
+              className="aspect-[2/3] w-28 shrink-0 rounded-lg bg-raised object-cover sm:w-36"
             />
           )}
           {view.title.overview && <Synopsis text={view.title.overview} />}
@@ -149,15 +149,36 @@ function DetailBody({
   )
 }
 
-/** TMDB's synopsis, five lines (about a poster's height) until you ask for the rest. */
+/**
+ * TMDB's synopsis, cut to about the poster's height (5 lines on phones, 7 wider) until you ask for
+ * the rest. "More" shows only when the text really is cut off at the panel's current width, which a
+ * ResizeObserver re-checks as the panel or text changes.
+ */
 function Synopsis({ text }: { text: string }) {
   const [open, setOpen] = useState(false)
-  const long = text.length > 220
+  const [clipped, setClipped] = useState(false)
+  const ref = useRef<HTMLParagraphElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || open) return
+    // Fires once on observe, then whenever the paragraph's size changes.
+    const observer = new ResizeObserver(() => setClipped(el.scrollHeight > el.clientHeight + 1))
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [text, open])
+
   return (
-    <div className="min-w-0 text-sm">
-      <p className={open || !long ? '' : 'line-clamp-5'}>{text}</p>
-      {long && (
-        <button onClick={() => setOpen(!open)} aria-expanded={open} className="-ml-1 mt-0.5 min-h-8 rounded px-1 font-bold text-muted hover:text-fg">
+    <div className="min-w-0 text-base">
+      <p ref={ref} id="synopsis" className={open ? '' : 'line-clamp-5 sm:line-clamp-7'}>
+        {text}
+      </p>
+      {(clipped || open) && (
+        <button
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          aria-controls="synopsis"
+          className="-ml-1 mt-0.5 min-h-8 rounded px-1 font-bold text-muted hover:text-fg"
+        >
           {open ? 'Less' : 'More'}
         </button>
       )}
@@ -297,7 +318,7 @@ function MovieBody({
       {/* Desktop has the room to show every watch face up; phones keep it behind Watch history. */}
       {view.watches.length > 0 && (
         <section aria-label="Watches" className="mt-5 hidden lg:block">
-          <h3 className="font-display text-lg font-semibold">Watch history</h3>
+          <h3 className="font-display text-xl font-semibold">Watch history</h3>
           <WatchList view={view} season={null} actions={actions} className="mt-1 max-h-80 overflow-y-auto overscroll-contain pr-1" />
         </section>
       )}
@@ -319,8 +340,29 @@ function SeriesBody({
   extraItems: MenuItem[]
 }) {
   const today = todayIso()
-  const { summary } = view
-  const remaining = view.seasons.filter((s) => isReleased(s.premiereDate, today) && seasonStatus(s, view.watches, today) === 'unwatched')
+  const { summary, title } = view
+  const color = sagaColor(title.saga)
+  const statusOf = (s: Season) => seasonStatus(s, view.watches, today)
+  const remaining = view.seasons.filter((s) => isReleased(s.premiereDate, today) && statusOf(s) === 'unwatched')
+  // With two seasons underway (one dropped halfway, say), the summary follows the one touched last,
+  // as Home's spotlight does, and mentions the other.
+  const seasonOfWatch = (w: Watch) => view.seasons.find((s) => s.id === w.seasonId) ?? null
+  const openWatches = view.watches.filter(isOpen).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+  const openWatch = openWatches[0]
+  const current = openWatch ? seasonOfWatch(openWatch) : null
+  const alsoOpen = openWatches.slice(1).map(seasonOfWatch).filter((s): s is Season => s !== null)
+  const nextSeason = current ? null : (remaining[0] ?? null)
+  const nextOut = view.seasons.find((s) => statusOf(s) === 'upcoming')
+
+  // The season you're watching starts open; one you start from here opens too.
+  const currentId = current?.id ?? null
+  const [expanded, setExpanded] = useState<string | null>(currentId)
+  const [seenCurrent, setSeenCurrent] = useState(currentId)
+  if (currentId !== seenCurrent) {
+    setSeenCurrent(currentId)
+    if (currentId) setExpanded(currentId)
+  }
+
   const menu: MenuItem[] = [
     ...(remaining.length > 1
       ? [
@@ -333,26 +375,99 @@ function SeriesBody({
     ...extraItems,
   ]
 
+  const seasonsLine = `${summary.seasonsDone} of ${plural(summary.seasonsReleased, 'season')} watched`
+  const count = current?.episodeCount ?? null
+  const done = openWatch?.episodesWatched ?? 0
+  const pct = current && count ? done / count : summary.seasonsReleased ? summary.seasonsDone / summary.seasonsReleased : 0
+
   return (
     <section className="mt-2">
-      <div className="flex items-center gap-2">
+      {/* Where you are with the show, and the one thing to do next. */}
+      <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <h3 className="font-display text-xl font-semibold">
             {summary.seasonsReleased === 0
               ? 'No seasons out yet'
-              : summary.status === 'watched'
-                ? 'All caught up'
-                : `${summary.seasonsDone} of ${plural(summary.seasonsReleased, 'season')} watched`}
+              : current
+                ? `Watching ${current.label}`
+                : summary.status === 'watched'
+                  ? 'All caught up'
+                  : seasonsLine}
           </h3>
-          {summary.watchCount > 1 && <p className="text-sm text-muted">Watched the whole show {plural(summary.watchCount, 'time')}</p>}
+          <p className="text-sm text-muted">
+            {current
+              ? `${count !== null ? `Episode ${done} of ${count}` : `${plural(done, 'episode')} watched`} · ${
+                  alsoOpen.length ? `${alsoOpen.map((s) => s.label).join(', ')} also in progress` : seasonsLine
+                }`
+              : nextSeason
+                ? `Up next: ${nextSeason.label}`
+                : nextOut?.premiereDate
+                  ? `${nextOut.label}: ${lowerFirst(formatCountdown(nextOut.premiereDate, today))}`
+                  : summary.watchCount > 1
+                    ? `Watched the whole show ${plural(summary.watchCount, 'time')}`
+                    : null}
+          </p>
         </div>
-        <MoreMenu label={`More for ${view.title.title}`} items={menu} />
+        <MoreMenu label={`More for ${title.title}`} items={menu} />
       </div>
-      <ol className="mt-3 space-y-3">
+      {summary.seasonsReleased > 0 && (
+        <span className="mt-3 block h-1.5 overflow-hidden rounded-full bg-line" aria-hidden="true">
+          <span className="block h-full rounded-full transition-[width]" style={{ width: `${pct * 100}%`, background: color }} />
+        </span>
+      )}
+      {current && openWatch ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {(count === null || done < count) && (
+            <button
+              onClick={() => actions.setEpisodes(openWatch.id, done + 1, count)}
+              aria-label={`One more episode of ${title.title} ${current.label}`}
+              className="min-h-11 rounded-lg bg-primary px-4 font-bold text-on-primary hover:brightness-110"
+            >
+              +1 episode
+            </button>
+          )}
+          <button
+            onClick={() => actions.finishSeason(view, current, openWatch.id)}
+            aria-label={`Finish ${title.title} ${current.label} today`}
+            className={`min-h-11 rounded-lg px-4 font-bold ${count !== null && done >= count ? 'bg-primary text-on-primary' : 'bg-raised hover:bg-line'}`}
+          >
+            Finish season
+          </button>
+        </div>
+      ) : (
+        nextSeason && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button onClick={() => actions.startSeason(view, nextSeason)} className="min-h-11 rounded-lg bg-primary px-4 font-bold text-on-primary hover:brightness-110">
+              Start {nextSeason.label}
+            </button>
+            <button
+              onClick={() => actions.markSeasonWatched(view, nextSeason)}
+              aria-label={`${nextSeason.label} watched today`}
+              className="min-h-11 rounded-lg bg-raised px-4 font-bold hover:bg-line"
+            >
+              Watched it today
+            </button>
+          </div>
+        )
+      )}
+
+      <h3 className="mt-6 text-xs font-bold tracking-[0.14em] text-muted uppercase">Seasons</h3>
+      <ol className="mt-1">
         {view.seasons.map((s) => (
-          <SeasonCard key={s.id} view={view} season={s} actions={actions} onHistory={() => onHistory(s.id)} onEdit={() => onEditSeason(s.id)} />
+          <SeasonRow
+            key={s.id}
+            view={view}
+            season={s}
+            actions={actions}
+            expanded={expanded === s.id}
+            onExpand={(open) => setExpanded(open ? s.id : null)}
+            onHistory={() => onHistory(s.id)}
+            onEdit={() => onEditSeason(s.id)}
+          />
         ))}
       </ol>
     </section>
   )
 }
+
+const lowerFirst = (s: string) => s[0].toLowerCase() + s.slice(1)

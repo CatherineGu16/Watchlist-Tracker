@@ -26,11 +26,11 @@ export function Sheet({
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 standalone:absolute [animation:fade-in_150ms_ease-out]" />
         <Dialog.Content
           style={{ '--accent': accent ?? 'var(--line)' } as CSSProperties}
-          className="fixed inset-x-0 bottom-0 z-50 flex standalone:absolute max-h-[85dvh] flex-col rounded-t-2xl border-t-4 border-[var(--accent)] bg-surface [animation:sheet-up_220ms_cubic-bezier(.2,.8,.2,1)] sm:inset-y-0 sm:right-0 sm:left-auto sm:max-h-none sm:w-[28rem] sm:rounded-none sm:border-t-0 sm:border-l-4 sm:[animation:sheet-left_220ms_cubic-bezier(.2,.8,.2,1)]"
+          className="fixed inset-x-0 bottom-0 z-50 flex standalone:absolute max-h-[85dvh] flex-col rounded-t-2xl border-t-4 border-[var(--accent)] bg-surface [animation:sheet-up_220ms_cubic-bezier(.2,.8,.2,1)] sm:inset-y-0 sm:right-0 sm:left-auto sm:max-h-none sm:w-[28rem] md:w-[32rem] lg:w-[36rem] sm:rounded-none sm:border-t-0 sm:border-l-4 sm:[animation:sheet-left_220ms_cubic-bezier(.2,.8,.2,1)]"
         >
           <div className="flex items-start gap-2 px-4 pt-4 pb-3 sm:pt-[max(1rem,env(safe-area-inset-top))]">
             <div className="min-w-0 flex-1">
-              <Dialog.Title className="font-display text-[1.75rem] leading-tight font-semibold">{title}</Dialog.Title>
+              <Dialog.Title className="font-display text-2xl leading-tight font-semibold">{title}</Dialog.Title>
               {description ? (
                 <Dialog.Description asChild>
                   <div className="mt-1 text-sm text-muted">{description}</div>

@@ -25,7 +25,7 @@ export function CheckButton({ view, onToggle, onOpen }: { view: TitleView; onTog
           style={{ background: `conic-gradient(${color} ${pct}%, var(--line) ${pct}% 100%)` }}
         >
           <span
-            className="grid size-6 place-items-center rounded-full bg-surface text-[11px] font-bold tabular-nums"
+            className="grid size-6 place-items-center rounded-full bg-surface text-xs font-bold tabular-nums"
             style={watched ? { background: color, color: 'var(--bg)' } : undefined}
           >
             {watched ? <Tick /> : summary.seasonsDone > 0 ? summary.seasonsDone : null}

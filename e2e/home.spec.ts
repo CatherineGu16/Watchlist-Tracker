@@ -23,7 +23,7 @@ test('a season you start shows up under Continue watching, with +1 and Finish', 
   await nav(page).getByRole('link', { name: 'Browse' }).click()
   await page.getByRole('radio', { name: 'TV' }).click()
   await page.getByRole('button', { name: /^WandaVision: 0 of 1 seasons/ }).click()
-  await sheet(page).getByRole('button', { name: 'Start watching' }).click()
+  await sheet(page).getByRole('button', { name: 'Start Season 1' }).click()
   await page.keyboard.press('Escape')
   await nav(page).getByRole('link', { name: 'Home' }).click()
 
@@ -43,7 +43,7 @@ test('a confirmation’s Undo never reverts a later, unrelated change', async ({
   await nav(page).getByRole('link', { name: 'Browse' }).click()
   await page.getByRole('radio', { name: 'TV' }).click()
   await page.getByRole('button', { name: /^Echo: 0 of 1 seasons/ }).click()
-  await sheet(page).getByRole('button', { name: 'Start watching' }).click()
+  await sheet(page).getByRole('button', { name: 'Start Season 1' }).click()
   await page.keyboard.press('Escape')
   await page.getByRole('radio', { name: 'Movies' }).click()
   await box(page, 'Iron Man').click()

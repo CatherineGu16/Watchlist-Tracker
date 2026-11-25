@@ -30,7 +30,7 @@ export function Poster({ title, className = '', children }: { title: Title; clas
           className="absolute inset-0 flex items-end p-2.5"
           style={{ background: `linear-gradient(160deg, color-mix(in srgb, ${color} 55%, var(--raised)), var(--raised) 75%)` }}
         >
-          <span className="line-clamp-4 font-poster text-lg leading-[1.05] tracking-wide text-fg uppercase">{title.title}</span>
+          <span className="line-clamp-4 font-poster text-base leading-[1.05] tracking-wide text-fg uppercase">{title.title}</span>
         </span>
       )}
       {children}

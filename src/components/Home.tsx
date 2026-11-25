@@ -168,17 +168,17 @@ function Spotlight({ item, actions, onOpen }: { item: HomeItem; actions: Actions
           <Poster title={title} />
         </button>
         <div className="flex min-w-0 flex-1 flex-col">
-          <p className="text-[0.6875rem] font-bold tracking-[0.18em] uppercase" style={{ color }}>
+          <p className="text-xs font-bold tracking-[0.18em] uppercase" style={{ color }}>
             Pick up where you left off
           </p>
           <button onClick={() => onOpen(title.id)} className="mt-1 text-left">
-            <span className="block font-poster text-[1.75rem] leading-[1.05] tracking-wide uppercase sm:text-4xl lg:text-5xl">{title.title}</span>
+            <span className="block font-poster text-[2rem] leading-[1.05] tracking-wide uppercase">{title.title}</span>
           </button>
           <p className="mt-1.5 flex flex-wrap gap-x-3 text-sm text-muted">
             {season && <span className="text-fg">{season.label}</span>}
             <span>{formatWatch(watch)}</span>
           </p>
-          {title.overview && <p className="mt-3 hidden text-sm sm:line-clamp-2 lg:line-clamp-3 lg:max-w-2xl lg:text-base">{title.overview}</p>}
+          {title.overview && <p className="mt-3 hidden text-base sm:line-clamp-2 lg:line-clamp-3 lg:max-w-2xl">{title.overview}</p>}
           {season && (
             <div className="mt-4 flex items-center gap-3 lg:max-w-md">
               {count !== null ? (
@@ -234,7 +234,7 @@ function RecentCard({ item, onOpen }: { item: HomeItem; onOpen: (id: string) => 
       <button onClick={() => onOpen(view.title.id)} className="group block w-full text-left">
         <Poster title={view.title} className="transition-transform group-hover:-translate-y-1">
           <span
-            className="absolute top-1.5 right-1.5 flex h-6 min-w-6 items-center justify-center gap-0.5 rounded-full px-1.5 text-[11px] font-bold text-bg shadow"
+            className="absolute top-1.5 right-1.5 flex h-6 min-w-6 items-center justify-center gap-0.5 rounded-full px-1.5 text-xs font-bold text-bg shadow"
             style={{ background: sagaColor(view.title.saga) }}
             aria-hidden="true"
           >
@@ -261,7 +261,7 @@ function RecentCard({ item, onOpen }: { item: HomeItem; onOpen: (id: string) => 
 function SectionHeading({ id, count, note, children }: { id: string; count?: number; note?: string; children: string }) {
   return (
     <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <h2 id={id} className="flex items-baseline gap-2 font-poster text-[1.6rem] leading-none tracking-wide uppercase lg:text-3xl">
+      <h2 id={id} className="flex items-baseline gap-2 font-poster text-2xl leading-none tracking-wide uppercase">
         {children}
         {count !== undefined && count > 0 && <span className="font-sans text-sm font-normal tracking-normal text-muted tabular-nums">{count}</span>}
       </h2>

@@ -42,7 +42,7 @@ export function AppBar({ page, onSettings, syncChip, actions }: { page: Page; on
       ref={ref}
       className="sticky top-0 z-30 flex items-center gap-2 bg-bg px-3 pt-[max(1.25rem,env(safe-area-inset-top))] pb-4 sm:px-4"
     >
-      <h1 className="font-poster text-[1.9rem] leading-none tracking-wide uppercase">Watchlist</h1>
+      <h1 className="font-poster text-[2rem] leading-none tracking-wide uppercase">Watchlist</h1>
       <nav aria-label="Pages" className="ml-6 hidden gap-1 lg:flex">
         {PAGES.map((p) => (
           <a

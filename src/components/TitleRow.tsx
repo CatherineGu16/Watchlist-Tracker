@@ -37,13 +37,14 @@ export const TitleRow = memo(function TitleRow({
         className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-lg py-2 pr-2 pl-1 text-left"
       >
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-display text-[1.2rem] leading-tight font-semibold">
+          <span className="block truncate font-display text-xl leading-tight font-semibold">
             {title.title}
           </span>
-          <span className="mt-0.5 flex flex-wrap gap-x-3 text-[0.8125rem] text-muted">
+          <span className="mt-0.5 flex flex-wrap gap-x-3 text-sm text-muted">
             <span>{TYPE_LABEL[title.type]}</span>
             {showYear && title.releaseDate && <span>{title.releaseDate.slice(0, 4)}</span>}
-            {title.phase !== null && <span>Phase {title.phase}</span>}
+            {/* Grouped by year, the phase is in the year's header instead. */}
+            {showYear && title.phase !== null && <span>Phase {title.phase}</span>}
             <StatusText view={view} today={today} />
           </span>
         </span>
@@ -92,13 +93,15 @@ function SeasonRow({
         className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-lg py-2 pr-2 pl-1 text-left"
       >
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-display text-[1.2rem] leading-tight font-semibold">
-            {title.title} <span className="text-muted">{season.label}</span>
+          <span className="flex min-w-0 items-center gap-2">
+            <TvIcon />
+            <span className="truncate font-display text-xl leading-tight font-semibold">{title.title}</span>
+            <span className="shrink-0 rounded-md bg-raised px-1.5 py-0.5 text-xs font-bold tabular-nums">S{season.number}</span>
           </span>
-          <span className="mt-0.5 flex flex-wrap gap-x-3 text-[0.8125rem] text-muted">
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-3 text-sm text-muted">
             {season.episodeCount !== null && <span>{plural(season.episodeCount, 'episode')}</span>}
             {showYear && entry.releaseDate && <span>{entry.releaseDate.slice(0, 4)}</span>}
-            {phase !== null && <span>Phase {phase}</span>}
+            {showYear && phase !== null && <span>Phase {phase}</span>}
             {status === 'upcoming' && (
               <span className="text-fg">{entry.releaseDate ? formatCountdown(entry.releaseDate, today) : 'Date to be announced'}</span>
             )}
@@ -160,4 +163,13 @@ function StatusText({ view, today }: { view: TitleView; today: string }) {
     return <span className="text-fg">{summary.lastWatched ? formatDate(summary.lastWatched) : 'Date unknown'}</span>
   }
   return null
+}
+
+function TvIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="size-4 shrink-0 text-muted" aria-hidden="true">
+      <rect x="1.5" y="3" width="13" height="9" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5.5 14.5h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
 }

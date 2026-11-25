@@ -52,13 +52,30 @@ describe('App', () => {
 
     await user.click(screen.getByRole('button', { name: /^WandaVision: 0 of 1 seasons watched/ }))
     const sheet = await screen.findByRole('dialog')
-    await user.click(within(sheet).getByRole('button', { name: 'Start watching' }))
+    await user.click(within(sheet).getByRole('button', { name: 'Start Season 1' }))
+    // The season you start opens with its counter.
     await user.click(within(sheet).getByRole('button', { name: 'One more episode' }))
     await user.click(within(sheet).getByRole('button', { name: 'One more episode' }))
-    expect(within(sheet).getByText('2')).toBeInTheDocument()
+    expect(within(sheet).getByText(/Episode 2 of 9/)).toBeInTheDocument()
 
-    await user.click(within(sheet).getByRole('button', { name: 'Finish season today' }))
+    await user.click(within(sheet).getByRole('button', { name: 'Finish WandaVision Season 1 today' }))
     expect(within(sheet).getByText('All caught up')).toBeInTheDocument()
+  })
+
+  it('follows the season you started last when two are underway', async () => {
+    const user = userEvent.setup()
+    await renderBrowse(user)
+    // Each test shares one store, so this one uses a show no other test touches.
+    await user.click(await screen.findByRole('button', { name: /^What If\.\.\.\?: 0 of 3 seasons watched/ }))
+    const sheet = await screen.findByRole('dialog')
+    await user.click(within(sheet).getByRole('button', { name: 'Start Season 1' }))
+    expect(within(sheet).getByRole('heading', { name: 'Watching Season 1' })).toBeInTheDocument()
+
+    const s2 = within(sheet).getByRole('listitem', { name: 'Season 2' })
+    await user.click(within(s2).getByRole('button', { name: /^Season 2/ }))
+    await user.click(within(s2).getByRole('button', { name: 'Start watching' }))
+    expect(within(sheet).getByRole('heading', { name: 'Watching Season 2' })).toBeInTheDocument()
+    expect(within(sheet).getByText(/Season 1 also in progress/)).toBeInTheDocument()
   })
 
   it('marks seasons watched long ago without inventing dates', async () => {
@@ -69,7 +86,7 @@ describe('App', () => {
     await user.click(within(sheet).getByRole('button', { name: 'More for Loki' }))
     await user.click(await screen.findByRole('menuitem', { name: 'Mark all 2 seasons watched, date unknown' }))
     expect(within(sheet).getByText('All caught up')).toBeInTheDocument()
-    expect(within(sheet).getAllByText('date unknown')).toHaveLength(2)
+    expect(within(sheet).getAllByText('Date unknown')).toHaveLength(2)
   })
 
   it('switches to Other Marvel and searches', async () => {
