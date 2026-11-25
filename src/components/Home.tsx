@@ -261,7 +261,7 @@ function RecentCard({ item, onOpen }: { item: HomeItem; onOpen: (id: string) => 
 function SectionHeading({ id, count, note, children }: { id: string; count?: number; note?: string; children: string }) {
   return (
     <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <h2 id={id} className="flex items-baseline gap-2 font-poster text-2xl leading-none tracking-wide uppercase">
+      <h2 id={id} className="flex items-baseline gap-2 font-display text-2xl leading-none font-medium tracking-wide uppercase">
         {children}
         {count !== undefined && count > 0 && <span className="font-sans text-sm font-normal tracking-normal text-muted tabular-nums">{count}</span>}
       </h2>
